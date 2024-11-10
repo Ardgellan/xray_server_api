@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Dict
 
@@ -6,24 +6,25 @@ app = FastAPI()
 
 # Данные для каждого сервера по стране
 server_data: Dict[str, Dict[str, str]] = {
-    "estonia": {"message": "User added successfully from Estonia!"},
-    "germany": {"message": "User added successfully from Germany!"},
-    "japan": {"message": "User added successfully from Japan!"}
+    "estonia": {"message": "User added successfully from Estonia!", "servers": ["estoniatest1", "estoniatest2"]},
+    "germany": {"message": "User added successfully from Germany!", "servers": ["germanytest"]},
+    "japan": {"message": "User added successfully from Japan!", "servers": ["japantest"]}
 }
-
-# Проверочный эндпоинт
-@app.get("/")
-def read_root():
-    return {"message": "API is working!"}
 
 # Эндпоинт для добавления пользователя (тестовый)
 @app.post("/add_user/{country}/")
 def add_user(country: str):
     if country in server_data:
         return {"message": server_data[country]["message"]}
-    return {"message": "Country not supported!"}
+    raise HTTPException(status_code=404, detail="Country not supported")
 
 # Эндпоинт для удаления пользователя (тестовый)
-@app.delete("/delete_user/{country}/{target_server}/")
-def delete_user(country: str, target_server: str):
-    return {"message": f"User deleted successfully from {target_server} in {country}!"}
+@app.delete("/delete_user/{target_server}/")
+def delete_user(target_server: str):
+    # Проверка, есть ли сервер в любом из списков
+    for country, data in server_data.items():
+        if target_server in data["servers"]:
+            return {"message": f"User deleted successfully from {target_server} in {country}!"}
+
+    # Если сервер не найден
+    raise HTTPException(status_code=404, detail="Server not found")
