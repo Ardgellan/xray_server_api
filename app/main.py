@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -13,6 +14,6 @@ def add_user():
     return {"message": "User added successfully!"}
 
 # Эндпоинт для удаления пользователя (тестовый)
-@app.delete("/delete_user/")
-def delete_user():
-    return {"message": "User deleted successfully!"}
+@app.delete("/delete_user/{target_server}/")
+def delete_user(target_server: str):
+    return {"message": f"User deleted successfully from {target_server}!"}
