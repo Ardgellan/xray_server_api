@@ -36,27 +36,27 @@ async def add_user(country: str, user_id: int, config_name: str):
     else:
         raise HTTPException(status_code=404, detail="Country not supported")
 
-# @app.get("/show_specified_config/")
-# async def show_specified_config(config_uuid: str, config_name: str):
-#     """Создать конфигурационную ссылку и вернуть её"""
-#     try:
-#         # Вызываем функцию для создания ссылки
-#         config_link = await xray_config.create_user_config_as_link_string(
-#             uuid=config_uuid,
-#             config_name=config_name
-#         )
+@app.get("/show_specified_config/{target_server}/")
+async def show_specified_config(config_uuid: str, config_name: str):
+    """Создать конфигурационную ссылку и вернуть её"""
+    try:
+        # Вызываем функцию для создания ссылки
+        config_link = await xray_config.create_user_config_as_link_string(
+            uuid=config_uuid,
+            config_name=config_name
+        )
         
-#         # Возвращаем сгенерированную ссылку
-#         return {"config_link": config_link}
+        # Возвращаем сгенерированную ссылку
+        return {"config_link": config_link}
 
-#     except Exception as e:
-#         logger.error(f"Ошибка при создании ссылки конфигурации: {str(e)}")
-#         raise HTTPException(status_code=500, detail="Не удалось создать ссылку конфигурации")
+    except Exception as e:
+        logger.error(f"Ошибка при создании ссылки конфигурации: {str(e)}")
+        raise HTTPException(status_code=500, detail="Не удалось создать ссылку конфигурации")
 
-@app.get("/show_specified_config/")
-async def show_specified_config():
-    """Простой эндпоинт для проверки работы"""
-    return {"message": "Config endpoint is working!"}
+# @app.get("/show_specified_config/{target_server}/")
+# async def show_specified_config():
+#     """Простой эндпоинт для проверки работы"""
+#     return {"message": "Config endpoint is working!"}
 
 # Упрощенный эндпоинт для удаления пользователя
 @app.delete("/delete_user/{target_server}/")
