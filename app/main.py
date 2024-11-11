@@ -1,6 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Dict
+from loguru import logger
+from app.data import config
+
+from app.xray.xray_configuration import add_new_user, create_user_config_as_link_string
 
 app = FastAPI()
 
@@ -11,12 +15,43 @@ server_data: Dict[str, Dict[str, str]] = {
     "japan": {"message": "User added successfully from Japan!", "servers": ["japantest"]}
 }
 
-# Эндпоинт для добавления пользователя (тестовый)
 @app.post("/add_user/{country}/")
-def add_user(country: str):
+async def add_user(country: str, user_id: int, config_name: str):
     if country in server_data:
-        return {"message": server_data[country]["message"]}
-    raise HTTPException(status_code=404, detail="Country not supported")
+        try:
+            # Вызов функции для добавления нового пользователя
+            user_link, config_uuid = await add_new_user(config_name=config_name, user_telegram_id=user_id)
+            server_domain = config.domain_name
+
+            # Передаем данные в ответе
+            return {
+                "message": server_data[country]["message"],
+                "link": user_link,
+                "config_uuid": config_uuid  # UUID передаем в ответ
+                "server_domain": server_domain
+            }
+
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to add user: {str(e)}")
+    else:
+        raise HTTPException(status_code=404, detail="Country not supported")
+
+@app.get("/show_specified_config/")
+async def show_specified_config(config_uuid: str, config_name: str):
+    """Создать конфигурационную ссылку и вернуть её"""
+    try:
+        # Вызываем функцию для создания ссылки
+        config_link = await xray_config.create_user_config_as_link_string(
+            uuid=config_uuid,
+            config_name=config_name
+        )
+        
+        # Возвращаем сгенерированную ссылку
+        return {"config_link": config_link}
+
+    except Exception as e:
+        logger.error(f"Ошибка при создании ссылки конфигурации: {str(e)}")
+        raise HTTPException(status_code=500, detail="Не удалось создать ссылку конфигурации")
 
 # Упрощенный эндпоинт для удаления пользователя
 @app.delete("/delete_user/{target_server}/")
