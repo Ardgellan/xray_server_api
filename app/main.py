@@ -5,6 +5,7 @@ from loguru import logger
 from app.data import config
 
 from app.xray import xray_config
+from app.xray.xray_configuration import add_new_user, create_user_config_as_link_string
 
 app = FastAPI()
 
