@@ -5,7 +5,6 @@ from loguru import logger
 from app.data import config
 
 from app.xray import xray_config
-from app.xray.xray_configuration import add_new_user, create_user_config_as_link_string
 
 app = FastAPI()
 
@@ -21,7 +20,7 @@ async def add_user(country: str, user_id: int, config_name: str):
     if country in server_data:
         try:
             # Вызов функции для добавления нового пользователя
-            user_link, config_uuid = await add_new_user(config_name=config_name, user_telegram_id=user_id)
+            user_link, config_uuid = await xray_config.add_new_user(config_name=config_name, user_telegram_id=user_id)
             server_domain = config.domain_name
 
             # Передаем данные в ответе
