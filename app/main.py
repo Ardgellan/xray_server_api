@@ -27,7 +27,7 @@ async def add_user(country: str, user_id: int, config_name: str):
             return {
                 "message": server_data[country]["message"],
                 "link": user_link,
-                "config_uuid": config_uuid  # UUID передаем в ответ
+                "config_uuid": config_uuid,  # UUID передаем в ответ
                 "server_domain": server_domain
             }
 

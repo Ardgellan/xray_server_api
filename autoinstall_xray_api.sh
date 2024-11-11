@@ -22,6 +22,8 @@ red_alert "ПЕРЕУСТАНАВЛИВАЕТ XRAY_API ЗАНОВО, В ТОМ �
 
 current_os_user=$(whoami)
 
+sudo vim /etc/sysctl.conf
+
 # Удаляем все старые данные
 rm -rf ~/autoinstall_xray_api.sh
 rm -rf ~/get-pip.py
@@ -108,7 +110,7 @@ echo "$Defaul_color" | sed 's/\$//g'
 echo ""
 echo "Enter server Domain Name:"
 echo "Just press ENTER for use default domain name [$Blue example.com $White]" | sed 's/\$//g'
-read domain name
+read domain_name
 if [ -z "$domain_name" ]
 then
       domain_name="example.com"  # Укажи здесь тестовый shop_id, если нужно
