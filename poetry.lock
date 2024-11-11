@@ -226,6 +226,23 @@ files = [
 ]
 
 [[package]]
+name = "emoji-country-flag"
+version = "2.0.1"
+description = "En/Decode unicode country flags emoji"
+optional = false
+python-versions = ">=3.10"
+files = [
+    {file = "emoji_country_flag-2.0.1-py3-none-any.whl", hash = "sha256:5465745b20f33d1ea46a53126f23f5aea34d66b20c2571c7bbb6a63925e4d95a"},
+    {file = "emoji_country_flag-2.0.1.tar.gz", hash = "sha256:0faa32ca4f12da4e4c8324431947077b116caf998b0df0c01168ae8ece24e57a"},
+]
+
+[package.extras]
+coverage = ["codacy-coverage (>=1.3.11)", "coverage (>=7.5.1)"]
+docs = ["sphinx (>=7.3.7)", "sphinx-rtd-theme (>=2.0.0)", "sphinxcontrib-jquery (>=4.1)"]
+ruff = ["ruff (>=0.4.7)"]
+test = ["emoji (>=2.12.1)", "pytest (>=8.2.2)", "tox (>=4.15.0)"]
+
+[[package]]
 name = "fastapi"
 version = "0.115.4"
 description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
@@ -244,17 +261,6 @@ typing-extensions = ">=4.8.0"
 [package.extras]
 all = ["email-validator (>=2.0.0)", "fastapi-cli[standard] (>=0.0.5)", "httpx (>=0.23.0)", "itsdangerous (>=1.1.0)", "jinja2 (>=2.11.2)", "orjson (>=3.2.1)", "pydantic-extra-types (>=2.0.0)", "pydantic-settings (>=2.0.0)", "python-multipart (>=0.0.7)", "pyyaml (>=5.3.1)", "ujson (>=4.0.1,!=4.0.2,!=4.1.0,!=4.2.0,!=4.3.0,!=5.0.0,!=5.1.0)", "uvicorn[standard] (>=0.12.0)"]
 standard = ["email-validator (>=2.0.0)", "fastapi-cli[standard] (>=0.0.5)", "httpx (>=0.23.0)", "jinja2 (>=2.11.2)", "python-multipart (>=0.0.7)", "uvicorn[standard] (>=0.12.0)"]
-
-[[package]]
-name = "flag"
-version = "0.1.1"
-description = "Simple flag library for python"
-optional = false
-python-versions = "*"
-files = [
-    {file = "Flag-0.1.1-py2.py3-none-any.whl", hash = "sha256:5b229b31943b5699ab65609921d63e9b228ba9e72f307f9510568c78f18b1fed"},
-    {file = "Flag-0.1.1.tar.gz", hash = "sha256:79b83fec0572790e62d574809a3dc10ae9d2464366d3373fa89de73cd8d03694"},
-]
 
 [[package]]
 name = "flake8"
@@ -707,4 +713,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "ba63337740ff550932c7101d7bfa07cd05e55d5ee5cd031f4497f36bc24db095"
+content-hash = "bb19df418554bfc3b5b8e2a3081a1b3ad8cb2b6f832d035dec235089fc95f064"

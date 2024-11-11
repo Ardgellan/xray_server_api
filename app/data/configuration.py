@@ -1,7 +1,7 @@
 from os import getenv
 
 from dotenv import load_dotenv
-from flag import flag
+from emoji_country_flag import flag
 
 from app.utils import IPInfo
 
