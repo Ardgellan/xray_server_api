@@ -37,7 +37,7 @@ async def add_user(country: str, user_id: int, config_name: str):
         raise HTTPException(status_code=404, detail="Country not supported")
 
 @app.get("/show_specified_config/{target_server}/")
-async def show_specified_config(config_uuid: str, config_name: str):
+async def show_specified_config(target_server: str, config_uuid: str, config_name: str):
     """Создать конфигурационную ссылку и вернуть её"""
     try:
         # Вызываем функцию для создания ссылки
