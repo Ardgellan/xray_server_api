@@ -3,7 +3,7 @@ from os import getenv
 from dotenv import load_dotenv
 from flag import flag
 
-from app.utils import IPInfo
+from app.utils.ip_info import IPInfo
 
 
 class DotEnvVariableNotFound(Exception):
