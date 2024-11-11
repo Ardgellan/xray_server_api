@@ -54,10 +54,9 @@ async def add_user(country: str, user_id: int, config_name: str):
 #         raise HTTPException(status_code=500, detail="Не удалось создать ссылку конфигурации")
 
 @app.get("/show_specified_config/")
-async def show_specified_config(config_uuid: str, config_name: str):
+async def show_specified_config():
     """Простой эндпоинт для проверки работы"""
-    return {"config_uuid": config_uuid, "config_name": config_name}
-
+    return {"message": "Config endpoint is working!"}
 
 # Упрощенный эндпоинт для удаления пользователя
 @app.delete("/delete_user/{target_server}/")
