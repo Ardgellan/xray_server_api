@@ -53,14 +53,14 @@ async def show_specified_config(target_server: str, config_uuid: str, config_nam
         logger.error(f"Ошибка при создании ссылки конфигурации: {str(e)}")
         raise HTTPException(status_code=500, detail="Не удалось создать ссылку конфигурации")
 
-# # Упрощенный эндпоинт для удаления пользователя
-# @app.delete("/delete_user/{target_server}/")
-# def delete_user(target_server: str):
-#     # Простое подтверждение удаления без привязки к стране
-#     return {"message": f"User deleted successfully from {target_server}!"}
+# Упрощенный эндпоинт для удаления пользователя
+@app.delete("/delete_user/{target_server}/")
+def delete_user(target_server: str):
+    # Простое подтверждение удаления без привязки к стране
+    return {"message": f"User deleted successfully from {target_server}!"}
 
 @app.delete("/deactivate_configs/{target_server}/")
-async def deactivate_configs(target_server: str, config_uuids: List[str]):
+async def deactivate_configs(target_server: str, config_uuids: list[str]):
     # Проверяем, что передан список конфигов
     if not config_uuids:
         raise HTTPException(status_code=400, detail="Список config_uuids не может быть пустым.")
