@@ -39,7 +39,7 @@ async def add_user(country: str, user_id: int, config_name: str):
         raise HTTPException(status_code=404, detail="Country not supported")
 
 
-@router.post("/reactivate_configs/{target_server}/")
+@app.post("/reactivate_configs/{target_server}/")
 async def reactivate_configs(target_server: str, config_uuids: list[str]):
     """
     Эндпоинт для восстановления конфигов пользователей по их UUID.
