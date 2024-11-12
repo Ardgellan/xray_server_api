@@ -53,13 +53,28 @@ async def show_specified_config(target_server: str, config_uuid: str, config_nam
         logger.error(f"Ошибка при создании ссылки конфигурации: {str(e)}")
         raise HTTPException(status_code=500, detail="Не удалось создать ссылку конфигурации")
 
-# @app.get("/show_specified_config/{target_server}/")
-# async def show_specified_config():
-#     """Простой эндпоинт для проверки работы"""
-#     return {"message": "Config endpoint is working!"}
+# # Упрощенный эндпоинт для удаления пользователя
+# @app.delete("/delete_user/{target_server}/")
+# def delete_user(target_server: str):
+#     # Простое подтверждение удаления без привязки к стране
+#     return {"message": f"User deleted successfully from {target_server}!"}
 
-# Упрощенный эндпоинт для удаления пользователя
-@app.delete("/delete_user/{target_server}/")
-def delete_user(target_server: str):
-    # Простое подтверждение удаления без привязки к стране
-    return {"message": f"User deleted successfully from {target_server}!"}
+@app.delete("/deactivate_configs/{target_server}/")
+async def deactivate_configs(target_server: str, config_uuids: List[str]):
+    # Проверяем, что передан список конфигов
+    if not config_uuids:
+        raise HTTPException(status_code=400, detail="Список config_uuids не может быть пустым.")
+    
+    try:
+        # Асинхронно вызываем функцию деактивации конфигов
+        await xray_config.deactivate_user_configs_in_xray(
+            uuids=config_uuids
+        )
+        return {"message": f"Configs deactivated successfully."}
+    
+    except Exception as e:
+        # Обрабатываем возможные ошибки и возвращаем сообщение об ошибке
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Ошибка при деактивации конфигов: {str(e)}"
+        )
