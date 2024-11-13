@@ -1,6 +1,6 @@
 from os import getenv
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv, set_key
 from flag import flag
 
 from app.utils.ip_info import IPInfo
@@ -21,11 +21,13 @@ class Configuration:
         self._xray_config_path: str = self._get_xray_config_path()
         self._server_ip: str = self._get_server_ip()
         self._server_country: str = self._get_server_country()
+        self._server_country_code: str = self._get_server_country_code()
         self._xray_sni: str = self._get_xray_sni()
         self._xray_privatekey: str = self._get_xray_privatekey()
         self._xray_publickey: str = self._get_xray_publickey()
         self._xray_shortid: str = self._get_xray_shortid()
         self._domain_name: str = self._get_domain_name()
+        self._save_country_in_env(self._server_country, self._server_country_code)
 
     def _get_user_config_prefix(self) -> str:
         user_config_prefix = getenv("USER_CONFIGS_PREFIX")
@@ -42,11 +44,21 @@ class Configuration:
     def _get_server_ip(self) -> str:
         return IPInfo().get_server_ip()
 
+    # def _get_server_country(self) -> str:
+    #     ip_info = IPInfo()
+    #     server_country = ip_info.get_server_country_name()
+    #     server_country_code = ip_info.get_server_country_code()
+    #     return f"{flag(server_country_code)} {server_country}"
+
     def _get_server_country(self) -> str:
+        """Возвращает название страны, в которой находится сервер"""
         ip_info = IPInfo()
-        server_country = ip_info.get_server_country_name()
-        server_country_code = ip_info.get_server_country_code()
-        return f"{flag(server_country_code)} {server_country}"
+        return ip_info.get_server_country_name()
+
+    def _get_server_country_code(self) -> str:
+        """Возвращает код страны, в которой находится сервер"""
+        ip_info = IPInfo()
+        return ip_info.get_server_country_code()
 
     def _get_xray_sni(self) -> str:
         xray_sni = getenv("XRAY_SNI")
@@ -78,6 +90,14 @@ class Configuration:
             raise DotEnvVariableNotFound("XRAY_DOMAIN_NAME")
         return domain_name
 
+    def _save_country_in_env(self, country: str, country_code: str):
+        """Если в .env нет переменных для страны и её кода, то добавляем их."""
+        if not os.getenv("SERVER_COUNTRY"):
+            set_key(".env", "SERVER_COUNTRY", country)
+        
+        if not os.getenv("SERVER_COUNTRY_CODE"):
+            set_key(".env", "SERVER_COUNTRY_CODE", country_code)
+
 
     @property
     def user_config_prefix(self) -> str:
@@ -90,10 +110,6 @@ class Configuration:
     @property
     def server_ip(self) -> str:
         return self._server_ip
-
-    @property
-    def server_country(self) -> str:
-        return self._server_country
 
     @property
     def xray_sni(self) -> str:
@@ -114,3 +130,7 @@ class Configuration:
     @property
     def domain_name(self) -> str:
         return self._domain_name
+
+    @property
+    def server_country(self) -> str:
+        return f"{self._server_country} ({self._server_country_code})"
