@@ -19,7 +19,7 @@ logger.add("logs/app_{time}.log", rotation="10 MB", compression="zip")
 
 @app.post("/add_user/{country}/")
 async def add_user(country: str, user_id: int, config_name: str):
-    logger.info(f"Received request for {country} with user_id={user_id} and config_name={config_name}")
+    logger.info(f"Received request for {country} with user_id={user_id} and config_name={config_name}, Salam")
     if country in server_data:
         try:
             # Вызов функции для добавления нового пользователя
