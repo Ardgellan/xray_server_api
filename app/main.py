@@ -7,7 +7,7 @@ from app.data import config
 from app.xray import xray_config
 
 app = FastAPI()
-# ЯХАБАЛЯ!
+
 # Данные для каждого сервера по стране
 server_data: Dict[str, Dict[str, str]] = {
     "estonia": {"message": "User added successfully from Estonia!", "servers": ["estoniatest1", "estoniatest2"]},
@@ -84,7 +84,7 @@ async def show_specified_config(target_server: str, config_uuid: str, config_nam
 #     return {"message": f"User deleted successfully from {target_server}!"}
 
 
-@app.post("/delete_config/{target_server}/")
+@app.delete("/delete_config/{target_server}/")
 async def delete_config(target_server: str, config_uuid: str):
     """
     Эндпоинт для удаления конфига по UUID.
