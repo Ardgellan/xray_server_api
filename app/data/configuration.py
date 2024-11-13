@@ -44,13 +44,15 @@ class Configuration:
         return IPInfo().get_server_ip()
 
     def _get_server_country(self) -> str:
-        ip_info = IPInfo()
-        server_country = ip_info.get_server_country_name()
+        server_country = getenv("SERVER_COUNTRY")
+        if not server_country:
+            raise DotEnvVariableNotFound("SERVER_COUNTRY")
         return server_country
 
     def _get_server_country_code(self) -> str:
-        ip_info = IPInfo()
-        server_country_code = ip_info.get_server_country_code()
+        server_country_code = getenv("SERVER_COUNTRY_CODE")
+        if not server_country_code:
+            raise DotEnvVariableNotFound("SERVER_COUNTRY_CODE")
         return server_country_code
 
     def _get_xray_sni(self) -> str:

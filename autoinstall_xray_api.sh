@@ -20,6 +20,13 @@ function red_alert() {
 # Используем предупреждение для начала
 red_alert "ПЕРЕУСТАНАВЛИВАЕТ XRAY_API ЗАНОВО, В ТОМ ЧИСЛЕ УДАЛЯЯ ВСЕ ПРЕДЫДУЩИЕ ДАННЫЕ!"
 
+Red='\033[0;31m'
+Green='\033[0;32m'
+Blue='\033[0;34m'
+Yellow='\033[1;33m'
+White='\033[1;37m'
+Default='\033[0m'
+
 current_os_user=$(whoami)
 
 sudo vim /etc/sysctl.conf
@@ -106,14 +113,25 @@ echo "Installing XRAY (XTLS-Reality)"
 echo "............................................................"
 echo "$Defaul_color" | sed 's/\$//g'
 
-# domain_name
-echo ""
-echo "Enter server Domain Name:"
-echo "Just press ENTER for use default domain name [$Blue example.com $White]" | sed 's/\$//g'
-read domain_name
-if [ -z "$domain_name" ]
-then
-      domain_name="example.com"  # Укажи здесь тестовый shop_id, если нужно
+echo -e "${Green}\nEnter server Domain Name:${Default}"
+echo -e "Just press ENTER to use the default domain name [${Blue}example.com${Default}]"
+read -p "Domain Name: " domain_name
+if [ -z "$domain_name" ]; then
+    domain_name="example.com"
+fi
+
+# Запрос названия страны
+echo -e "${Green}\nEnter server country name (e.g., 'Estonia'):${Default}"
+read -p "Country Name: " server_country
+if [ -z "$server_country" ]; then
+    server_country="Estonia"  # Значение по умолчанию, если ничего не введено
+fi
+
+# Запрос кода страны
+echo -e "${Green}\nEnter server country code (e.g., 'EE'):${Default}"
+read -p "Country Code: " server_country_code
+if [ -z "$server_country_code" ]; then
+    server_country_code="EE"  # Значение по умолчанию, если ничего не введено
 fi
 
 site_url="dl.google.com"
@@ -214,6 +232,8 @@ systemctl restart xray.service
 sudo cat <<EOF > ~/xray_server_api/app/data/.env
 
 XRAY_DOMAIN_NAME = "$domain_name"
+SERVER_COUNTRY = "$server_country"
+SERVER_COUNTRY_CODE = "$server_country_code"
 XRAY_CONFIG_PATH = "/usr/local/etc/xray/config.json"
 USER_CONFIGS_PREFIX = "$config_prefix"
 XRAY_PRIVATEKEY = "$x25519_private_key"
