@@ -7,7 +7,7 @@ from app.data import config
 from app.xray import xray_config
 
 app = FastAPI()
-
+# ЯХАБАЛЯ!
 # Данные для каждого сервера по стране
 server_data: Dict[str, Dict[str, str]] = {
     "estonia": {"message": "User added successfully from Estonia!", "servers": ["estoniatest1", "estoniatest2"]},
