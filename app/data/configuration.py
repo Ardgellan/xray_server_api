@@ -21,6 +21,7 @@ class Configuration:
         self._xray_config_path: str = self._get_xray_config_path()
         self._server_ip: str = self._get_server_ip()
         self._server_country: str = self._get_server_country()
+        self._server_country_code: str = self._get_server_country_code()
         self._xray_sni: str = self._get_xray_sni()
         self._xray_privatekey: str = self._get_xray_privatekey()
         self._xray_publickey: str = self._get_xray_publickey()
@@ -45,8 +46,12 @@ class Configuration:
     def _get_server_country(self) -> str:
         ip_info = IPInfo()
         server_country = ip_info.get_server_country_name()
+        return server_country
+
+    def _get_server_country_code(self) -> str:
+        ip_info = IPInfo()
         server_country_code = ip_info.get_server_country_code()
-        return f"{flag(server_country_code)} {server_country}"
+        return server_country_code
 
     def _get_xray_sni(self) -> str:
         xray_sni = getenv("XRAY_SNI")
@@ -114,3 +119,7 @@ class Configuration:
     @property
     def server_country(self) -> str:
         return self._server_country
+
+    @property
+    def server_country_code(self) -> str:
+        return self._server_country_code

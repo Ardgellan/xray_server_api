@@ -25,13 +25,17 @@ async def add_user(country: str, user_id: int, config_name: str):
             # Вызов функции для добавления нового пользователя
             user_link, config_uuid = await xray_config.add_new_user(config_name=config_name, user_telegram_id=user_id)
             server_domain = config.domain_name
+            server_country = config.server_country  # Название страны
+            server_country_code = config.server_country_code  # Код страны
 
             # Передаем данные в ответе
             return {
                 "message": server_data[country]["message"],
                 "link": user_link,
                 "config_uuid": config_uuid,  # UUID передаем в ответ
-                "server_domain": server_domain
+                "server_domain": server_domain,
+                "server_country": server_country,  # Отправляем название страны
+                "server_country_code": server_country_code  # Отправляем код страны
             }
 
         except Exception as e:
