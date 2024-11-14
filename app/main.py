@@ -45,7 +45,10 @@ async def add_user(country: str, user_id: int, config_name: str):
 
 
 @app.post("/reactivate_configs/{target_server}/")
-async def reactivate_configs(target_server: str, config_uuids: list[str]):
+async def reactivate_configs(
+    target_server: str, 
+    config_uuids: list[str] = Body(..., embed=True)
+):
     """
     Эндпоинт для восстановления конфигов пользователей по их UUID.
     Принимаем список UUID и передаем в функцию восстановления.
@@ -108,7 +111,10 @@ async def delete_config(target_server: str, config_uuid: str):
 
 
 @app.delete("/deactivate_configs/{target_server}/")
-async def deactivate_configs(target_server: str, config_uuids: list[str]):
+async def deactivate_configs(
+    target_server: str, 
+    config_uuids: list[str] = Body(..., embed=True)
+):
     # Проверяем, что передан список конфигов
     if not config_uuids:
         raise HTTPException(status_code=400, detail="Список config_uuids не может быть пустым.")
