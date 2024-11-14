@@ -55,7 +55,7 @@ async def reactivate_configs(
     """
     try:
         # Вызов функции восстановления
-        success = await xray_config.reactivate_user_configs_in_xray(uuids=config_uuids)
+        success = await xray_config.reactivate_user_configs_in_xray(config_uuids=config_uuids)
 
         if success:
             return {"status": "success", "message": "Конфиги успешно восстановлены."}
