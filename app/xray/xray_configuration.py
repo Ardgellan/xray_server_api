@@ -42,71 +42,6 @@ class XrayConfiguration:
         """Restart xray service"""
         os.system("systemctl restart xray")
 
-    # async def add_new_user(self, config_name: str, user_telegram_id: int) -> str:
-    #     """Add new user to xray server config
-
-    #     Returns:
-    #         str: user config as link string
-    #     """
-    #     credentials = CredentialsGenerator().generate_new_person(user_telegram_id=user_telegram_id)
-    #     config = await self._load_server_config()
-    #     updated_config = deepcopy(config)
-    #     updated_config["inbounds"][0]["settings"]["clients"].append(credentials)
-    #     # try:
-    #         await self._save_server_config(updated_config)
-    #         await self._restart_xray()
-    #     # except Exception as e:
-    #         logger.error(e)
-    #         await self._save_server_config(config)
-    #         await self._restart_xray()
-    #     else:
-    #         # Добавляем транзакцию и механизм повторных попыток для вставки в базу данных
-    #         attempts = 3  # Количество попыток
-    #         success = False
-    #         for attempt in range(attempts):
-    #             try:
-    #                 # Открываем транзакцию и пытаемся добавить новый конфиг
-    #                 async with db_manager.transaction() as conn:
-    #                     await db_manager.insert_new_vpn_config(
-    #                         user_id=user_telegram_id,
-    #                         config_name=config_name,
-    #                         config_uuid=credentials["id"],
-    #                         conn=conn,  # Передаем транзакцию для консистентности
-    #                     )
-    #                 success = True
-    #                 break  # Если вставка успешна, выходим из цикла
-    #             except Exception as e:
-    #                 logger.error(
-    #                     f"Ошибка при добавлении конфигурации VPN для пользователя {user_telegram_id} (попытка {attempt + 1}): {str(e)}"
-    #                 )
-    #                 await asyncio.sleep(2)  # Задержка перед повторной попыткой
-
-    #         if success:
-    #             # Возвращаем ссылку на конфиг после успешной вставки
-    #             return await self.create_user_config_as_link_string(
-    #                 credentials["id"], config_name=config_name
-    #             )
-    #         else:
-    #             # Если все попытки не удались, логируем ошибку
-    #             logger.critical(
-    #                 f"Не удалось добавить конфигурацию для пользователя {user_telegram_id} после {attempts} попыток."
-    #             )
-
-    #             # Отправляем сообщение пользователю на русском и английском языках
-    #             error_message = (
-    #                 "⚠️ Упс, похоже возникла ошибка при генерации VPN-конфига. Попробуйте еще раз, в меню 'Мои VPN соединения!'\n\n"
-    #                 "⚠️ Oops, it looks like there was an error generating the VPN config. Please try again in the 'My VPN Connections' menu!"
-    #             )
-
-    #             await dp.bot.send_message(
-    #                 chat_id=user_telegram_id,
-    #                 text=error_message,
-    #             )
-
-    #             raise Exception(
-    #                 "Не удалось добавить конфигурацию VPN в базу данных. Пожалуйста, проверьте вручную."
-    #             )
-
     
     async def add_new_user(self, config_name: str, user_telegram_id: int) -> tuple:
         """Add new user to xray server config and return the config link and user UUID"""
@@ -214,22 +149,6 @@ class XrayConfiguration:
             await db_manager.delete_many_vpn_configs_by_uuids(uuids=uuids)
             return True
 
-    # async def disconnect_user_by_telegram_id(self, telegram_id: int) -> bool:
-    #     """Disconnect user by telegram id
-
-    #     Args:
-    #         telegram_id (int): user telegram id
-
-    #     Returns:
-    #         bool: True if user was disconnected, False if not
-    #     """
-    #     user_configs_uuids = await db_manager.get_user_config_names_and_uuids(user_id=telegram_id)
-    #     if user_configs_uuids:
-    #         uuids = [config.config_uuid for config in user_configs_uuids]
-    #         return await self.disconnect_many_uuids(uuids=uuids)
-    #     else:
-    #         return False
-
     async def deactivate_user_configs_in_xray(self, uuids: list[str]) -> bool:
         """Временно деактивируем конфиги в конфигурации Xray"""
         config = await self._load_server_config()
@@ -253,48 +172,6 @@ class XrayConfiguration:
 
         return True
 
-    # async def reactivate_user_configs_in_xray(self, user_ids: list[int]) -> bool:
-    #     """Восстанавливаем конфиги в Xray для всех пользователей с продленной подпиской"""
-
-    #     # Собираем все UUID конфигов пользователей
-    #     all_configs_to_restore = []
-
-    #     for user_id in user_ids:
-    #         await db_manager.update_subscription_status(user_id=user_id, is_active=True)
-    #         # Получаем только UUID всех конфигов пользователя
-    #         user_uuids = await db_manager.get_user_uuids_by_user_id(user_id=user_id)
-    #         if user_uuids:
-    #             all_configs_to_restore.extend(user_uuids)
-
-    #     # Проверяем, если нет конфигов для восстановления
-    #     if not all_configs_to_restore:
-    #         # logger.info("Нет конфигов для восстановления.")
-    #         return False
-
-    #     # Загружаем текущий конфиг сервера
-    #     server_config = await self._load_server_config()
-    #     updated_config = deepcopy(server_config)
-
-    #     # Добавляем обратно конфиги по UUID
-    #     for uuid in all_configs_to_restore:
-    #         updated_config["inbounds"][0]["settings"]["clients"].append(
-    #             {
-    #                 "id": uuid,
-    #                 "email": f"{uuid}@example.com",  # Здесь можно использовать email-шаблон
-    #                 "flow": "xtls-rprx-vision",  # Xray flow
-    #             }
-    #         )
-
-    #     try:
-    #         # Сохраняем обновленный конфиг и перезагружаем Xray
-    #         await self._save_server_config(updated_config)
-    #         await self._restart_xray()
-    #     except Exception as e:
-    #         logger.error(f"Ошибка при восстановлении конфигов: {e}")
-    #         return False
-
-    #     # logger.info(f"Все конфиги для пользователей {user_ids} успешно восстановлены.")
-    #     return True
 
     async def reactivate_user_configs_in_xray(self, config_uuids: list[str]) -> bool:
         """
