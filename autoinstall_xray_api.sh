@@ -29,7 +29,7 @@ Default='\033[0m'
 
 current_os_user=$(whoami)
 
-sudo vim /etc/sysctl.conf
+# sudo vim /etc/sysctl.conf
 
 # Удаляем все старые данные
 rm -rf ~/autoinstall_xray_api.sh
@@ -39,19 +39,19 @@ sudo systemctl stop xray_api.service
 rm -rf /etc/systemd/system/xray_api.service
 rm -f ~/nohup.out
 
-rm -rf /usr/local/etc #json.config is also included
-rm -rf /usr/local/bin
-sudo systemctl stop xray.service
-rm -rf /etc/systemd/system/xray.service
-rm -rf /etc/systemd/system/xray.service.d
-rm -rf /etc/systemd/system/xray@.service
-rm -rf /etc/systemd/system/xray@.service.d
-rm -rf /usr/local/lib
+# rm -rf /usr/local/etc #json.config is also included
+# rm -rf /usr/local/bin
+# sudo systemctl stop xray.service
+# rm -rf /etc/systemd/system/xray.service
+# rm -rf /etc/systemd/system/xray.service.d
+# rm -rf /etc/systemd/system/xray@.service
+# rm -rf /etc/systemd/system/xray@.service.d
+# rm -rf /usr/local/lib
 
-sudo systemctl daemon-reload
+# sudo systemctl daemon-reload
 
-# Расширение системы, если она была минимизирована
-yes | unminimize
+# # Расширение системы, если она была минимизирована
+# yes | unminimize
 
 # Апдейт и апгрейд системы
 echo "Обновляем систему..."
@@ -108,10 +108,10 @@ WantedBy=multi-user.target
 EOF
 cd
 
-echo "$Orange" | sed 's/\$//g'
-echo "Installing XRAY (XTLS-Reality)"
-echo "............................................................"
-echo "$Defaul_color" | sed 's/\$//g'
+# echo "$Orange" | sed 's/\$//g'
+# echo "Installing XRAY (XTLS-Reality)"
+# echo "............................................................"
+# echo "$Defaul_color" | sed 's/\$//g'
 
 echo -e "${Green}\nEnter server Domain Name:${Default}"
 echo -e "Just press ENTER to use the default domain name [${Blue}example.com${Default}]"
@@ -137,96 +137,96 @@ fi
 site_url="dl.google.com"
 config_prefix="VPNizator"
 
-#install xray
-bash -c "$(curl -L https://raw.githubusercontent.com/Ardgellan/XTLS_Reality_Server/main/install-release.sh)" @ install
+# #install xray
+# bash -c "$(curl -L https://raw.githubusercontent.com/Ardgellan/XTLS_Reality_Server/main/install-release.sh)" @ install
 
-# To increase performance, you can configure
-# Bottleneck Bandwidth and
-# Round-trip propagation time (BBR) congestion control algorithm on the server
-echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf
-echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
-sysctl -p
+# # To increase performance, you can configure
+# # Bottleneck Bandwidth and
+# # Round-trip propagation time (BBR) congestion control algorithm on the server
+# echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf
+# echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
+# sysctl -p
 
 #execute /usr/local/bin/xray x25519
 #and get public and private keys by splitting lines output and
 #remove "Private key: " and "Public key: " from output
 #and save it to variables
-x25519_keys=$(sudo /usr/local/bin/xray x25519)
-x25519_private_key=$(echo "$x25519_keys" | sed -n 1p | sed 's/Private key: //g')
-x25519_public_key=$(echo "$x25519_keys" | sed -n 2p | sed 's/Public key: //g')
-echo "$x25519_keys" | sed 's/\$//g'
+# x25519_keys=$(sudo /usr/local/bin/xray x25519)
+# x25519_private_key=$(echo "$x25519_keys" | sed -n 1p | sed 's/Private key: //g')
+# x25519_public_key=$(echo "$x25519_keys" | sed -n 2p | sed 's/Public key: //g')
+# echo "$x25519_keys" | sed 's/\$//g'
 
 
 
-#get short id by using openssl
-short_id=$(sudo openssl rand -hex 8)
+# #get short id by using openssl
+# short_id=$(sudo openssl rand -hex 8)
 
 #configure xray
-sudo cat <<EOF > /usr/local/etc/xray/config.json
-{
-    "log": {
-        "loglevel": "info"
-    },
-    "routing": {
-        "rules": [],
-        "domainStrategy": "AsIs"
-    },
-    "inbounds": [
-        {
-            "port": 443,
-            "protocol": "vless",
-            "tag": "vless_tls",
-            "settings": {
-                "clients": [],
-                "decryption": "none"
-            },
-            "streamSettings": {
-                "network": "tcp",
-                "security": "reality",
-                "realitySettings": {
-                    "show": false,
-                    "dest": "$site_url:443",
-                    "xver": 0,
-                    "serverNames": [
-                        "$site_url"
-                    ],
-                    "privateKey": "$x25519_private_key",
-                    "minClientVer": "",
-                    "maxClientVer": "",
-                    "maxTimeDiff": 0,
-                    "shortIds": [
-                        "$short_id"
-                    ]
-                }
-            },
-            "sniffing": {
-                "enabled": true,
-                "destOverride": [
-                    "http",
-                    "tls"
-                ]
-            }
-        }
-    ],
-    "outbounds": [
-        {
-            "protocol": "freedom",
-            "tag": "direct"
-        },
-        {
-            "protocol": "blackhole",
-            "tag": "block"
-        }
-    ]
-}
-EOF
+# sudo cat <<EOF > /usr/local/etc/xray/config.json
+# {
+#     "log": {
+#         "loglevel": "info"
+#     },
+#     "routing": {
+#         "rules": [],
+#         "domainStrategy": "AsIs"
+#     },
+#     "inbounds": [
+#         {
+#             "port": 443,
+#             "protocol": "vless",
+#             "tag": "vless_tls",
+#             "settings": {
+#                 "clients": [],
+#                 "decryption": "none"
+#             },
+#             "streamSettings": {
+#                 "network": "tcp",
+#                 "security": "reality",
+#                 "realitySettings": {
+#                     "show": false,
+#                     "dest": "$site_url:443",
+#                     "xver": 0,
+#                     "serverNames": [
+#                         "$site_url"
+#                     ],
+#                     "privateKey": "$x25519_private_key",
+#                     "minClientVer": "",
+#                     "maxClientVer": "",
+#                     "maxTimeDiff": 0,
+#                     "shortIds": [
+#                         "$short_id"
+#                     ]
+#                 }
+#             },
+#             "sniffing": {
+#                 "enabled": true,
+#                 "destOverride": [
+#                     "http",
+#                     "tls"
+#                 ]
+#             }
+#         }
+#     ],
+#     "outbounds": [
+#         {
+#             "protocol": "freedom",
+#             "tag": "direct"
+#         },
+#         {
+#             "protocol": "blackhole",
+#             "tag": "block"
+#         }
+#     ]
+# }
+# EOF
 
-#enable and start bot service
-systemctl daemon-reload
-systemctl enable xray_api.service
-systemctl start xray_api.service
-systemctl enable xray.service
-systemctl restart xray.service
+# #enable and start bot service
+# systemctl daemon-reload
+# systemctl enable xray_api.service
+# systemctl start xray_api.service
+# systemctl enable xray.service
+# systemctl restart xray.service
 
 #configure bot .env file
 sudo cat <<EOF > ~/xray_server_api/app/data/.env
@@ -236,9 +236,9 @@ SERVER_COUNTRY = "$server_country"
 SERVER_COUNTRY_CODE = "$server_country_code"
 XRAY_CONFIG_PATH = "/usr/local/etc/xray/config.json"
 USER_CONFIGS_PREFIX = "$config_prefix"
-XRAY_PRIVATEKEY = "$x25519_private_key"
-XRAY_PUBLICKEY = "$x25519_public_key"
-XRAY_SHORTID = "$short_id"
+XRAY_PRIVATEKEY = ""
+XRAY_PUBLICKEY = ""
+XRAY_SHORTID = ""
 XRAY_SNI = "$site_url"
 EOF
 
