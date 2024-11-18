@@ -39,19 +39,19 @@ sudo systemctl stop xray_api.service
 rm -rf /etc/systemd/system/xray_api.service
 rm -f ~/nohup.out
 
-# rm -rf /usr/local/etc #json.config is also included
-# rm -rf /usr/local/bin
-# sudo systemctl stop xray.service
-# rm -rf /etc/systemd/system/xray.service
-# rm -rf /etc/systemd/system/xray.service.d
-# rm -rf /etc/systemd/system/xray@.service
-# rm -rf /etc/systemd/system/xray@.service.d
-# rm -rf /usr/local/lib
+rm -rf /usr/local/etc #json.config is also included
+rm -rf /usr/local/bin
+sudo systemctl stop xray.service
+rm -rf /etc/systemd/system/xray.service
+rm -rf /etc/systemd/system/xray.service.d
+rm -rf /etc/systemd/system/xray@.service
+rm -rf /etc/systemd/system/xray@.service.d
+rm -rf /usr/local/lib
 
-# sudo systemctl daemon-reload
+sudo systemctl daemon-reload
 
 # # Расширение системы, если она была минимизирована
-# yes | unminimize
+yes | unminimize
 
 # Апдейт и апгрейд системы
 echo "Обновляем систему..."
@@ -236,9 +236,9 @@ SERVER_COUNTRY = "$server_country"
 SERVER_COUNTRY_CODE = "$server_country_code"
 XRAY_CONFIG_PATH = "/usr/local/etc/xray/config.json"
 USER_CONFIGS_PREFIX = "$config_prefix"
-XRAY_PRIVATEKEY = ""
-XRAY_PUBLICKEY = ""
-XRAY_SHORTID = ""
+XRAY_PRIVATEKEY = "$x25519_private_key"
+XRAY_PUBLICKEY = "$x25519_public_key"
+XRAY_SHORTID = "$short_id"
 XRAY_SNI = "$site_url"
 EOF
 
