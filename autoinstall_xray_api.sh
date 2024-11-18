@@ -108,10 +108,10 @@ WantedBy=multi-user.target
 EOF
 cd
 
-# echo "$Orange" | sed 's/\$//g'
-# echo "Installing XRAY (XTLS-Reality)"
-# echo "............................................................"
-# echo "$Defaul_color" | sed 's/\$//g'
+echo "$Orange" | sed 's/\$//g'
+echo "Installing XRAY (XTLS-Reality)"
+echo "............................................................"
+echo "$Defaul_color" | sed 's/\$//g'
 
 echo -e "${Green}\nEnter server Domain Name:${Default}"
 echo -e "Just press ENTER to use the default domain name [${Blue}example.com${Default}]"
@@ -137,98 +137,98 @@ fi
 site_url="dl.google.com"
 config_prefix="VPNizator"
 
-# #install xray
-# bash -c "$(curl -L https://raw.githubusercontent.com/Ardgellan/XTLS_Reality_Server/main/install-release.sh)" @ install
+#install xray
+bash -c "$(curl -L https://raw.githubusercontent.com/Ardgellan/XTLS_Reality_Server/main/install-release.sh)" @ install
 
-# # To increase performance, you can configure
-# # Bottleneck Bandwidth and
-# # Round-trip propagation time (BBR) congestion control algorithm on the server
-# echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf
-# echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
-# sysctl -p
+# To increase performance, you can configure
+# Bottleneck Bandwidth and
+# Round-trip propagation time (BBR) congestion control algorithm on the server
+echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf
+echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
+sysctl -p
 
-#execute /usr/local/bin/xray x25519
-#and get public and private keys by splitting lines output and
-#remove "Private key: " and "Public key: " from output
-#and save it to variables
-# x25519_keys=$(sudo /usr/local/bin/xray x25519)
-# x25519_private_key=$(echo "$x25519_keys" | sed -n 1p | sed 's/Private key: //g')
-# x25519_public_key=$(echo "$x25519_keys" | sed -n 2p | sed 's/Public key: //g')
-# echo "$x25519_keys" | sed 's/\$//g'
+# execute /usr/local/bin/xray x25519
+# and get public and private keys by splitting lines output and
+# remove "Private key: " and "Public key: " from output
+# and save it to variables
+x25519_keys=$(sudo /usr/local/bin/xray x25519)
+x25519_private_key=$(echo "$x25519_keys" | sed -n 1p | sed 's/Private key: //g')
+x25519_public_key=$(echo "$x25519_keys" | sed -n 2p | sed 's/Public key: //g')
+echo "$x25519_keys" | sed 's/\$//g'
 
 
 
-# #get short id by using openssl
-# short_id=$(sudo openssl rand -hex 8)
+#get short id by using openssl
+short_id=$(sudo openssl rand -hex 8)
 
-#configure xray
-# sudo cat <<EOF > /usr/local/etc/xray/config.json
-# {
-#     "log": {
-#         "loglevel": "info"
-#     },
-#     "routing": {
-#         "rules": [],
-#         "domainStrategy": "AsIs"
-#     },
-#     "inbounds": [
-#         {
-#             "port": 443,
-#             "protocol": "vless",
-#             "tag": "vless_tls",
-#             "settings": {
-#                 "clients": [],
-#                 "decryption": "none"
-#             },
-#             "streamSettings": {
-#                 "network": "tcp",
-#                 "security": "reality",
-#                 "realitySettings": {
-#                     "show": false,
-#                     "dest": "$site_url:443",
-#                     "xver": 0,
-#                     "serverNames": [
-#                         "$site_url"
-#                     ],
-#                     "privateKey": "$x25519_private_key",
-#                     "minClientVer": "",
-#                     "maxClientVer": "",
-#                     "maxTimeDiff": 0,
-#                     "shortIds": [
-#                         "$short_id"
-#                     ]
-#                 }
-#             },
-#             "sniffing": {
-#                 "enabled": true,
-#                 "destOverride": [
-#                     "http",
-#                     "tls"
-#                 ]
-#             }
-#         }
-#     ],
-#     "outbounds": [
-#         {
-#             "protocol": "freedom",
-#             "tag": "direct"
-#         },
-#         {
-#             "protocol": "blackhole",
-#             "tag": "block"
-#         }
-#     ]
-# }
-# EOF
+# configure xray
+sudo cat <<EOF > /usr/local/etc/xray/config.json
+{
+    "log": {
+        "loglevel": "info"
+    },
+    "routing": {
+        "rules": [],
+        "domainStrategy": "AsIs"
+    },
+    "inbounds": [
+        {
+            "port": 443,
+            "protocol": "vless",
+            "tag": "vless_tls",
+            "settings": {
+                "clients": [],
+                "decryption": "none"
+            },
+            "streamSettings": {
+                "network": "tcp",
+                "security": "reality",
+                "realitySettings": {
+                    "show": false,
+                    "dest": "$site_url:443",
+                    "xver": 0,
+                    "serverNames": [
+                        "$site_url"
+                    ],
+                    "privateKey": "$x25519_private_key",
+                    "minClientVer": "",
+                    "maxClientVer": "",
+                    "maxTimeDiff": 0,
+                    "shortIds": [
+                        "$short_id"
+                    ]
+                }
+            },
+            "sniffing": {
+                "enabled": true,
+                "destOverride": [
+                    "http",
+                    "tls"
+                ]
+            }
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "freedom",
+            "tag": "direct"
+        },
+        {
+            "protocol": "blackhole",
+            "tag": "block"
+        }
+    ]
+}
+EOF
 
-# #enable and start bot service
-# systemctl daemon-reload
-# systemctl enable xray_api.service
-# systemctl start xray_api.service
-# systemctl enable xray.service
-# systemctl restart xray.service
+# enable and start bot service
+systemctl daemon-reload
+systemctl enable xray_api.service
+systemctl start xray_api.service
+systemctl enable xray.service
+systemctl restart xray.service
 
-#configure bot .env file
+# configure xray_api .env file
 sudo cat <<EOF > ~/xray_server_api/app/data/.env
 
 XRAY_DOMAIN_NAME = "$domain_name"
