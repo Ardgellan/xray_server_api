@@ -208,3 +208,23 @@ class XrayConfiguration:
 
         # logger.info(f"Все конфиги успешно восстановлены для UUIDs: {', '.join(config_uuids)}.")
         return True
+
+    
+    async def get_active_client_count(self) -> int:
+        """
+        Читает конфигурацию Xray и возвращает количество активных клиентов.
+        """
+        try:
+            # Загружаем конфигурацию сервера
+            config = await self._load_server_config()
+
+            # Извлекаем список клиентов
+            clients = config.get("inbounds", [])[0].get("settings", {}).get("clients", [])
+        
+            # Возвращаем количество клиентов
+            return len(clients)
+    
+        except Exception as e:
+            logger.error(f"Ошибка при подсчете активных клиентов: {e}")
+            raise
+

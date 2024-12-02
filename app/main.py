@@ -117,3 +117,27 @@ async def deactivate_configs(
             status_code=500, 
             detail=f"Ошибка при деактивации конфигов: {str(e)}"
         )
+
+@app.get("/server_stats/")
+async def get_server_stats():
+    """
+    Эндпоинт для получения текущей статистики сервера.
+    Возвращает информацию о количестве активных клиентов, стране и домене.
+    """
+    # logger.info("Получен запрос на статистику сервера.")
+
+    try:
+        # Читаем количество активных клиентов
+        active_clients = await xray_config.get_active_client_count()  # Функция для подсчета клиентов
+
+        # Возвращаем статистику
+        return {
+            "server_domain": config.domain_name,  # Домен сервера
+            "server_country": config.server_country,  # Название страны
+            "server_country_code": config.server_country_code,  # Код страны
+            "active_clients": active_clients  # Количество активных клиентов
+        }
+
+    except Exception as e:
+        logger.error(f"Ошибка при получении статистики: {str(e)}")
+        raise HTTPException(status_code=500, detail="Не удалось получить статистику")
