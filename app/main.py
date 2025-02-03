@@ -141,3 +141,28 @@ async def get_server_stats():
     except Exception as e:
         logger.error(f"Ошибка при получении статистики: {str(e)}")
         raise HTTPException(status_code=500, detail="Не удалось получить статистику")
+
+@app.delete("/cleanup_configs/{target_server}/")
+async def cleanup_configs(target_server: str, valid_uuids: list[str] = Body(..., embed=True)):
+    """
+    Удаляет всех пользователей из конфигурации Xray, кроме переданных UUID.
+    """
+    try:
+        # Загружаем текущую конфигурацию
+        config = await xray_config._load_server_config()
+        updated_config = deepcopy(config)
+
+        # Оставляем только пользователей, которые есть в valid_uuids
+        updated_config["inbounds"][0]["settings"]["clients"] = [
+            client for client in updated_config["inbounds"][0]["settings"]["clients"]
+            if client["id"] in valid_uuids
+        ]
+
+        # Сохраняем новый конфиг и перезапускаем Xray
+        await xray_config._save_server_config(updated_config)
+        await xray_config._restart_xray()
+
+        return {"status": "success", "message": "Конфигурация очищена от неактуальных клиентов."}
+    except Exception as e:
+        logger.error(f"Ошибка при очистке конфигов: {str(e)}")
+        raise HTTPException(status_code=500, detail="Не удалось очистить конфигурацию")
