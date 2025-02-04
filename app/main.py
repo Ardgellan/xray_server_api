@@ -143,26 +143,34 @@ async def get_server_stats():
         raise HTTPException(status_code=500, detail="Не удалось получить статистику")
 
 @app.delete("/cleanup_configs/{target_server}/")
-async def cleanup_configs(target_server: str, valid_uuids: list[str] = Body(..., embed=True)):
+async def cleanup_configs(target_server: str, valid_uuids: dict):
     """
-    Удаляет всех пользователей из конфигурации Xray, кроме переданных UUID.
+    Удаляет устаревшие VPN-конфиги с сервера Xray.
     """
     try:
-        # Загружаем текущую конфигурацию
-        config = await xray_config._load_server_config()
-        updated_config = deepcopy(config)
+        valid_uuids_list = valid_uuids.get("valid_uuids", [])
 
-        # Оставляем только пользователей, которые есть в valid_uuids
-        updated_config["inbounds"][0]["settings"]["clients"] = [
-            client for client in updated_config["inbounds"][0]["settings"]["clients"]
-            if client["id"] in valid_uuids
-        ]
+        if not valid_uuids_list:
+            raise HTTPException(status_code=400, detail="Список валидных UUID пуст")
 
-        # Сохраняем новый конфиг и перезапускаем Xray
-        await xray_config._save_server_config(updated_config)
-        await xray_config._restart_xray()
+        # Получаем все текущие UUID с сервера
+        all_uuids = await xray_manager.get_all_uuids()
 
-        return {"status": "success", "message": "Конфигурация очищена от неактуальных клиентов."}
+        # Находим невалидные (те, которых нет в списке валидных)
+        invalid_uuids = list(set(all_uuids) - set(valid_uuids_list))
+
+        if not invalid_uuids:
+            return {"status": "success", "message": "Нет невалидных конфигов для удаления"}
+
+        # Удаляем невалидные UUID
+        success = await xray_manager.disconnect_many_uuids(invalid_uuids)
+
+        if success:
+            return {"status": "success", "removed_count": len(invalid_uuids)}
+        else:
+            raise HTTPException(status_code=500, detail="Ошибка при удалении конфигов")
+
     except Exception as e:
-        logger.error(f"Ошибка при очистке конфигов: {str(e)}")
+        logger.error(f"Ошибка при очистке конфигов: {e}")
         raise HTTPException(status_code=500, detail="Не удалось очистить конфигурацию")
+
