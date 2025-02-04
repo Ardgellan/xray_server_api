@@ -146,7 +146,6 @@ class XrayConfiguration:
             await self._restart_xray()
             return False
         else:
-            await db_manager.delete_many_vpn_configs_by_uuids(uuids=uuids)
             return True
 
     async def deactivate_user_configs_in_xray(self, uuids: list[str]) -> bool:
