@@ -154,7 +154,7 @@ async def cleanup_configs(target_server: str, valid_uuids: dict):
             raise HTTPException(status_code=400, detail="Список валидных UUID пуст")
 
         # Получаем все текущие UUID с сервера
-        all_uuids = await xray_manager.get_all_uuids()
+        all_uuids = await xray_config.get_all_uuids()
 
         # Находим невалидные (те, которых нет в списке валидных)
         invalid_uuids = list(set(all_uuids) - set(valid_uuids_list))
@@ -163,7 +163,7 @@ async def cleanup_configs(target_server: str, valid_uuids: dict):
             return {"status": "success", "message": "Нет невалидных конфигов для удаления"}
 
         # Удаляем невалидные UUID
-        success = await xray_manager.disconnect_many_uuids(invalid_uuids)
+        success = await xray_config.disconnect_many_uuids(invalid_uuids)
 
         if success:
             return {"status": "success", "removed_count": len(invalid_uuids)}
