@@ -148,7 +148,6 @@ async def cleanup_configs(target_server: str, valid_uuids: dict):
     """
     Удаляет устаревшие VPN-конфиги с сервера Xray.
     """
-    logger.info(f"Получено тело запроса: {valid_uuids}")
 
     try:
         valid_uuids_list = valid_uuids.get("valid_uuids", [])
