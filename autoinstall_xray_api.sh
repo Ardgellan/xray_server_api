@@ -162,13 +162,87 @@ echo "$x25519_keys" | sed 's/\$//g'
 short_id=$(sudo openssl rand -hex 8)
 
 # configure xray
+# sudo cat <<EOF > /usr/local/etc/xray/config.json
+# {
+#     "log": {
+#         "loglevel": "info"
+#     },
+#     "routing": {
+#         "rules": [],
+#         "domainStrategy": "AsIs"
+#     },
+#     "inbounds": [
+#         {
+#             "port": 443,
+#             "protocol": "vless",
+#             "tag": "vless_tls",
+#             "settings": {
+#                 "clients": [],
+#                 "decryption": "none"
+#             },
+#             "streamSettings": {
+#                 "network": "tcp",
+#                 "security": "reality",
+#                 "realitySettings": {
+#                     "show": false,
+#                     "dest": "$site_url:443",
+#                     "xver": 0,
+#                     "serverNames": [
+#                         "$site_url"
+#                     ],
+#                     "privateKey": "$x25519_private_key",
+#                     "minClientVer": "",
+#                     "maxClientVer": "",
+#                     "maxTimeDiff": 0,
+#                     "shortIds": [
+#                         "$short_id"
+#                     ]
+#                 }
+#             },
+#             "sniffing": {
+#                 "enabled": true,
+#                 "destOverride": [
+#                     "http",
+#                     "tls"
+#                 ]
+#             }
+#         }
+#     ],
+#     "outbounds": [
+#         {
+#             "protocol": "freedom",
+#             "tag": "direct"
+#         },
+#         {
+#             "protocol": "blackhole",
+#             "tag": "block"
+#         }
+#     ]
+# }
+# EOF
+
 sudo cat <<EOF > /usr/local/etc/xray/config.json
 {
     "log": {
-        "loglevel": "info"
+        "loglevel": "info",
+        "access": "/var/log/xray/access.log",
+        "error": "/var/log/xray/error.log"
     },
     "routing": {
-        "rules": [],
+        "rules": [
+            {
+                "type": "field",
+                "protocol": ["bittorrent"],
+                "outboundTag": "block"
+                "log": true
+            },
+            {
+                "type": "field",
+                "ip": ["geoip:private"],
+                "outboundTag": "block"
+                "log": true
+            }
+        ],
         "domainStrategy": "AsIs"
     },
     "inbounds": [
@@ -191,7 +265,7 @@ sudo cat <<EOF > /usr/local/etc/xray/config.json
                         "$site_url"
                     ],
                     "privateKey": "$x25519_private_key",
-                    "minClientVer": "",
+                    "minClientVer": "1.8.0",
                     "maxClientVer": "",
                     "maxTimeDiff": 0,
                     "shortIds": [
