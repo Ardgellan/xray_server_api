@@ -233,13 +233,13 @@ sudo cat <<EOF > /usr/local/etc/xray/config.json
             {
                 "type": "field",
                 "protocol": ["bittorrent"],
-                "outboundTag": "block"
+                "outboundTag": "block",
                 "log": true
             },
             {
                 "type": "field",
                 "ip": ["geoip:private"],
-                "outboundTag": "block"
+                "outboundTag": "block",
                 "log": true
             }
         ],
@@ -252,7 +252,12 @@ sudo cat <<EOF > /usr/local/etc/xray/config.json
             "tag": "vless_tls",
             "settings": {
                 "clients": [],
-                "decryption": "none"
+                "decryption": "none",
+                "connectionLimits": {
+                    "enable": true,
+                    "conn": 15,
+                    "time": 60
+                }
             },
             "streamSettings": {
                 "network": "tcp",
