@@ -161,66 +161,6 @@ echo "$x25519_keys" | sed 's/\$//g'
 #get short id by using openssl
 short_id=$(sudo openssl rand -hex 8)
 
-# configure xray
-# sudo cat <<EOF > /usr/local/etc/xray/config.json
-# {
-#     "log": {
-#         "loglevel": "info"
-#     },
-#     "routing": {
-#         "rules": [],
-#         "domainStrategy": "AsIs"
-#     },
-#     "inbounds": [
-#         {
-#             "port": 443,
-#             "protocol": "vless",
-#             "tag": "vless_tls",
-#             "settings": {
-#                 "clients": [],
-#                 "decryption": "none"
-#             },
-#             "streamSettings": {
-#                 "network": "tcp",
-#                 "security": "reality",
-#                 "realitySettings": {
-#                     "show": false,
-#                     "dest": "$site_url:443",
-#                     "xver": 0,
-#                     "serverNames": [
-#                         "$site_url"
-#                     ],
-#                     "privateKey": "$x25519_private_key",
-#                     "minClientVer": "",
-#                     "maxClientVer": "",
-#                     "maxTimeDiff": 0,
-#                     "shortIds": [
-#                         "$short_id"
-#                     ]
-#                 }
-#             },
-#             "sniffing": {
-#                 "enabled": true,
-#                 "destOverride": [
-#                     "http",
-#                     "tls"
-#                 ]
-#             }
-#         }
-#     ],
-#     "outbounds": [
-#         {
-#             "protocol": "freedom",
-#             "tag": "direct"
-#         },
-#         {
-#             "protocol": "blackhole",
-#             "tag": "block"
-#         }
-#     ]
-# }
-# EOF
-
 sudo cat <<EOF > /usr/local/etc/xray/config.json
 {
     "log": {
@@ -252,12 +192,7 @@ sudo cat <<EOF > /usr/local/etc/xray/config.json
             "tag": "vless_tls",
             "settings": {
                 "clients": [],
-                "decryption": "none",
-                "connectionLimits": {
-                    "enable": true,
-                    "conn": 15,
-                    "time": 60
-                }
+                "decryption": "none"
             },
             "streamSettings": {
                 "network": "tcp",
