@@ -134,7 +134,7 @@ if [ -z "$server_country_code" ]; then
     server_country_code="EE"  # Значение по умолчанию, если ничего не введено
 fi
 
-site_url="dl.google.com"
+site_url="microsoft.com"
 config_prefix="VPNizator"
 
 #install xray
