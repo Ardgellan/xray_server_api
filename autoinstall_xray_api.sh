@@ -156,9 +156,9 @@ x25519_keys=$(sudo /usr/local/bin/xray x25519)
 # x25519_public_key=$(echo "$x25519_keys" | sed -n 2p | sed 's/Public key: //g')
 
 # Ищем строку с "private key" без учета регистра и вырезаем префикс
-x25519_private_key=$(echo "$x25519_keys" | awk -F': ' '/private key/i {print $2}')
+x25519_private_key=$(echo "$x25519_keys" | awk -F': ' '/private key/i {printf "%s", $2}')
 # Ищем строку с "public key" без учета регистра и вырезаем префикс
-x25519_public_key=$(echo "$x25519_keys" | awk -F': ' '/public key/i {print $2}')
+x25519_public_key=$(echo "$x25519_keys" | awk -F': ' '/public key/i {printf "%s", $2}')
 
 echo "$x25519_keys" | sed 's/\$//g'
 
