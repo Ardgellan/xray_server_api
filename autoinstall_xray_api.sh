@@ -152,13 +152,13 @@ sysctl -p
 # remove "Private key: " and "Public key: " from output
 # and save it to variables
 x25519_keys=$(sudo /usr/local/bin/xray x25519)
-x25519_private_key=$(echo "$x25519_keys" | sed -n 1p | sed 's/Private key: //g')
-x25519_public_key=$(echo "$x25519_keys" | sed -n 2p | sed 's/Password: //g')
+# x25519_private_key=$(echo "$x25519_keys" | sed -n 1p | sed 's/Private key: //g')
+# x25519_public_key=$(echo "$x25519_keys" | sed -n 2p | sed 's/Password: //g')
 
 # Ищем строку с "private key" без учета регистра и вырезаем префикс
-# x25519_private_key=$(echo "$x25519_keys" | awk -F': ' '/private key/i {printf "%s", $2}')
-# # Ищем строку с "public key" без учета регистра и вырезаем префикс
-# x25519_public_key=$(echo "$x25519_keys_output" | awk -F': ' '/Password/ {printf "%s", $2}')
+x25519_private_key=$(echo "$x25519_keys" | awk -F': ' '/PrivateKey/ {printf "%s", $2}')
+# Ищем строку с "public key" без учета регистра и вырезаем префикс
+x25519_public_key=$(echo "$x25519_keys" | awk -F': ' '/Password/ {printf "%s", $2}')
 
 echo "$x25519_keys" | sed 's/\$//g'
 
