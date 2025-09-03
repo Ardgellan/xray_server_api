@@ -134,7 +134,7 @@ if [ -z "$server_country_code" ]; then
     server_country_code="EE"  # Значение по умолчанию, если ничего не введено
 fi
 
-site_url="www.microsoft.com"
+site_url="cdnjs.com"
 config_prefix="VPNizator"
 
 #install xray
@@ -152,8 +152,13 @@ sysctl -p
 # remove "Private key: " and "Public key: " from output
 # and save it to variables
 x25519_keys=$(sudo /usr/local/bin/xray x25519)
-x25519_private_key=$(echo "$x25519_keys" | sed -n 1p | sed 's/Private key: //g')
-x25519_public_key=$(echo "$x25519_keys" | sed -n 2p | sed 's/Public key: //g')
+# x25519_private_key=$(echo "$x25519_keys" | sed -n 1p | sed 's/Private key: //g')
+# x25519_public_key=$(echo "$x25519_keys" | sed -n 2p | sed 's/Public key: //g')
+# Ищем строку с "private key" без учета регистра и вырезаем префикс
+x25519_private_key=$(echo "$x25519_keys" | grep -i 'private key' | sed -E 's/private key: //i')
+
+# Ищем строку с "public key" без учета регистра и вырезаем префикс
+x25519_public_key=$(echo "$x25519_keys" | grep -i 'public key' | sed -E 's/public key: //i')
 echo "$x25519_keys" | sed 's/\$//g'
 
 
