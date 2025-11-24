@@ -10,164 +10,173 @@ from .credentials_generator import CredentialsGenerator
 class XrayConfiguration:
     def __init__(self):
         self._config_path = config.xray_config_path
-        self._server_ip_and_port = f"{config.server_ip}:443"
+        self._server_ip_and_port = f"{config.server_ip}:443" # Это используется только как дефолт, ссылка генерится ниже
         self._config_prefix = config.user_config_prefix
 
     async def _load_server_config(self) -> dict:
-        """Load server config from file"""
         async with aiofiles.open(self._config_path, "r") as f:
-            config: dict = json.loads(await f.read())
-        return config
+            return json.loads(await f.read())
 
-    async def _save_server_config(self, config: dict):
-        """Save server config to file"""
+    async def _save_server_config(self, config_data: dict):
         async with aiofiles.open(self._config_path, "w") as f:
-            dumped_json_config = json.dumps(config, indent=4)
-            await f.write(dumped_json_config)
+            await f.write(json.dumps(config_data, indent=4))
 
     async def _restart_xray(self):
-        """Restart xray service"""
         os.system("systemctl restart xray")
 
-    
+    # --- ГЛАВНАЯ ЛОГИКА ДОБАВЛЕНИЯ ---
     async def add_new_user(self, config_name: str, user_telegram_id: int) -> tuple:
-        """Add new user to xray server config and return the config link and user UUID"""
-
-        # Генерация новых учетных данных для пользователя
         credentials = CredentialsGenerator().generate_new_person(user_telegram_id=user_telegram_id)
-    
-        # --- ЛОГИКА XHTTP/GRPC ---
-        # Если сеть xhttp или grpc, flow должен быть пустым!
-        if config.xray_network in ["xhttp", "grpc"]:
+        
+        # 1. Настраиваем flow
+        target_network = config.xray_network # "xhttp"
+        
+        if target_network in ["xhttp", "grpc"]:
             credentials["flow"] = ""
-        # -------------------------
+        else:
+            credentials["flow"] = "xtls-rprx-vision" 
 
-        # Загрузка текущей конфигурации сервера Xray
+        # 2. Грузим конфиг
         server_config_json = await self._load_server_config()
         updated_config = deepcopy(server_config_json)
 
-        # Добавление нового клиента в конфиг
-        updated_config["inbounds"][0]["settings"]["clients"].append(credentials)
+        # 3. ИЩЕМ НУЖНЫЙ INBOUND
+        # Мы должны добавить юзера ТОЛЬКО в тот инбаунд, который соответствует XRAY_NETWORK
+        user_added = False
+        
+        for inbound in updated_config["inbounds"]:
+            stream = inbound.get("streamSettings", {})
+            network = stream.get("network", "tcp") # дефолт tcp
+            
+            # Если нашли инбаунд с нужным протоколом (xhttp)
+            if network == target_network:
+                if "clients" not in inbound["settings"]:
+                    inbound["settings"]["clients"] = []
+                
+                inbound["settings"]["clients"].append(credentials)
+                user_added = True
+                break # Добавили в целевой и выходим. В легаси (TCP) не добавляем.
 
-        # Сохраняем обновленный конфиг и перезапускаем сервер
+        # Fallback: Если вдруг инбаунда с xhttp нет (скрипт миграции не сработал?), кидаем в первый
+        if not user_added:
+            logger.warning(f"Target network {target_network} not found in inbounds. Adding to first available.")
+            updated_config["inbounds"][0]["settings"]["clients"].append(credentials)
+
+        # 4. Сохраняем
         try:
             await self._save_server_config(updated_config)
             await self._restart_xray()
         except Exception as e:
-            logger.error(e)
+            logger.error(f"Error adding user: {e}")
             await self._save_server_config(server_config_json)
             await self._restart_xray()
             raise Exception("Failed to update server config")
 
-        # Генерируем ссылку на конфиг для нового пользователя
+        # 5. Ссылка (порт 4433)
         link = await self.create_user_config_as_link_string(credentials["id"], config_name=config_name)
-
-        # Возвращаем ссылку и UUID
         return link, credentials["id"]
 
-
     async def create_user_config_as_link_string(self, uuid: str, config_name: str) -> str:
-        # Базовая часть ссылки
+        # Используем порт из конфига (4433), а не зашитый
+        target_port = config.xray_link_port
+        
         link = (
-            f"vless://{uuid}@{self._server_ip_and_port}"
+            f"vless://{uuid}@{config.server_ip}:{target_port}"
             f"?security=reality"
             f"&sni={config.xray_sni}"
             f"&fp=chrome"
             f"&pbk={config.xray_publickey}"
             f"&sid={config.xray_shortid}"
             f"&encryption=none"
-            f"&type={config.xray_network}" # Берем тип из .env (xhttp)
+            f"&type={config.xray_network}" 
         )
-
-        # Специфика параметров для разных протоколов
+        
         if config.xray_network == "xhttp":
-            link += f"&path={config.xray_path}"
-            link += "&mode=auto"
+            link += f"&path={config.xray_path}&mode=auto"
         elif config.xray_network == "tcp":
             link += "&flow=xtls-rprx-vision"
         elif config.xray_network == "grpc":
-            # Если вдруг вернешься на grpc, используем path как serviceName
             link += f"&serviceName={config.xray_path}"
-
-        # Добавляем хештег (имя конфига)
+            
         link += f"#{self._config_prefix}_{config_name}"
-        
         return link
 
     async def get_all_uuids(self) -> list[str]:
-        config = await self._load_server_config()
-        uuids = [client["id"] for client in config["inbounds"][0]["settings"]["clients"]]
-        return uuids
+        # Собираем UUID со всех инбаундов
+        conf = await self._load_server_config()
+        uuids = []
+        for inbound in conf.get("inbounds", []):
+            clients = inbound.get("settings", {}).get("clients", [])
+            for c in clients:
+                uuids.append(c["id"])
+        return list(set(uuids))
 
     async def disconnect_user_by_uuid(self, uuid: str) -> bool:
-        config = await self._load_server_config()
-        updated_config = deepcopy(config)
-        updated_config["inbounds"][0]["settings"]["clients"] = [
-            client
-            for client in updated_config["inbounds"][0]["settings"]["clients"]
-            if client["id"] != uuid
-        ]
-        return await self._apply_config_changes(updated_config, config)
+        # Удаляем отовсюду
+        conf = await self._load_server_config()
+        updated = deepcopy(conf)
+        for inbound in updated["inbounds"]:
+            if "clients" in inbound["settings"]:
+                inbound["settings"]["clients"] = [
+                    c for c in inbound["settings"]["clients"] if c["id"] != uuid
+                ]
+        return await self._apply_changes(updated, conf)
 
     async def disconnect_many_uuids(self, uuids: list[str]) -> bool:
-        config = await self._load_server_config()
-        updated_config = deepcopy(config)
-        updated_config["inbounds"][0]["settings"]["clients"] = [
-            client
-            for client in updated_config["inbounds"][0]["settings"]["clients"]
-            if client["id"] not in uuids
-        ]
-        return await self._apply_config_changes(updated_config, config)
+        conf = await self._load_server_config()
+        updated = deepcopy(conf)
+        for inbound in updated["inbounds"]:
+             if "clients" in inbound["settings"]:
+                inbound["settings"]["clients"] = [
+                    c for c in inbound["settings"]["clients"] if c["id"] not in uuids
+                ]
+        return await self._apply_changes(updated, conf)
 
     async def deactivate_user_configs_in_xray(self, uuids: list[str]) -> bool:
         return await self.disconnect_many_uuids(uuids)
 
     async def reactivate_user_configs_in_xray(self, config_uuids: list[str]) -> bool:
-        """
-        Восстанавливаем конфиги в Xray для пользователей с переданными UUID.
-        """
-        if not config_uuids:
-            logger.info("Нет конфигов для восстановления.")
-            return False
+        if not config_uuids: return False
 
         server_config = await self._load_server_config()
         updated_config = deepcopy(server_config)
 
-        # Определяем flow на основе текущей сети
-        current_flow = ""
-        if config.xray_network == "tcp":
-            current_flow = "xtls-rprx-vision"
+        target_net = config.xray_network
+        current_flow = "" if target_net in ["xhttp", "grpc"] else "xtls-rprx-vision"
 
-        # Добавляем обратно конфиги по UUID
+        # Ищем целевой инбаунд
+        target_inbound = None
+        for inbound in updated_config["inbounds"]:
+            if inbound.get("streamSettings", {}).get("network", "tcp") == target_net:
+                target_inbound = inbound
+                break
+        
+        if not target_inbound:
+            target_inbound = updated_config["inbounds"][0]
+
         for uuid in config_uuids:
-            updated_config["inbounds"][0]["settings"]["clients"].append(
-                {
-                    "id": uuid,
-                    "email": f"{uuid}@example.com",
-                    "flow": current_flow, # Используем правильный flow
-                }
-            )
+            target_inbound["settings"]["clients"].append({
+                "id": uuid,
+                "email": f"{uuid}@example.com",
+                "flow": current_flow
+            })
 
-        return await self._apply_config_changes(updated_config, server_config)
+        return await self._apply_changes(updated_config, server_config)
 
     async def get_active_client_count(self) -> int:
         try:
-            config = await self._load_server_config()
-            clients = config.get("inbounds", [])[0].get("settings", {}).get("clients", [])
-            return len(clients)
-        except Exception as e:
-            logger.error(f"Ошибка при подсчете активных клиентов: {e}")
-            raise
-
-    # Вспомогательный метод для сохранения и рестарта с откатом
-    async def _apply_config_changes(self, new_config, old_config) -> bool:
-        try:
-            await self._save_server_config(new_config)
-            await self._restart_xray()
+            return len(await self.get_all_uuids())
         except Exception as e:
             logger.error(e)
-            await self._save_server_config(old_config)
+            return 0
+            
+    async def _apply_changes(self, new_conf, old_conf) -> bool:
+        try:
+            await self._save_server_config(new_conf)
+            await self._restart_xray()
+            return True
+        except Exception as e:
+            logger.error(e)
+            await self._save_server_config(old_conf)
             await self._restart_xray()
             return False
-        else:
-            return True

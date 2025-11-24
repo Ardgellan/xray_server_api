@@ -25,120 +25,82 @@ class Configuration:
         self._xray_shortid: str = self._get_xray_shortid()
         self._domain_name: str = self._get_domain_name()
         
-        # --- НОВЫЕ ПЕРЕМЕННЫЕ ДЛЯ XHTTP ---
+        # --- НОВЫЕ ПЕРЕМЕННЫЕ ---
         self._xray_network: str = self._get_xray_network()
         self._xray_path: str = self._get_xray_path()
+        self._xray_link_port: str = self._get_xray_link_port()
 
     def _get_user_config_prefix(self) -> str:
-        user_config_prefix = getenv("USER_CONFIGS_PREFIX")
-        if not user_config_prefix:
-            raise DotEnvVariableNotFound("USER_CONFIGS_PREFIX")
-        return user_config_prefix
+        return getenv("USER_CONFIGS_PREFIX", "VPNizator")
 
     def _get_xray_config_path(self) -> str:
-        xray_config_path = getenv("XRAY_CONFIG_PATH")
-        if not xray_config_path:
-            raise DotEnvVariableNotFound("XRAY_CONFIG_PATH")
-        return xray_config_path
+        return getenv("XRAY_CONFIG_PATH", "/usr/local/etc/xray/config.json")
 
     def _get_server_ip(self) -> str:
         return IPInfo().get_server_ip()
 
     def _get_server_country(self) -> str:
-        server_country = getenv("SERVER_COUNTRY")
-        if not server_country:
-            raise DotEnvVariableNotFound("SERVER_COUNTRY")
-        return server_country
+        return getenv("SERVER_COUNTRY", "Unknown")
 
     def _get_server_country_code(self) -> str:
-        server_country_code = getenv("SERVER_COUNTRY_CODE")
-        if not server_country_code:
-            raise DotEnvVariableNotFound("SERVER_COUNTRY_CODE")
-        return server_country_code
+        return getenv("SERVER_COUNTRY_CODE", "UN")
 
     def _get_xray_sni(self) -> str:
-        xray_sni = getenv("XRAY_SNI")
-        if not xray_sni:
-            raise DotEnvVariableNotFound("XRAY_SNI")
-        return xray_sni
+        return getenv("XRAY_SNI", "www.microsoft.com")
 
     def _get_xray_privatekey(self) -> str:
-        xray_privatekey = getenv("XRAY_PRIVATEKEY")
-        if not xray_privatekey:
-            raise DotEnvVariableNotFound("XRAY_PRIVATEKEY")
-        return xray_privatekey
+        val = getenv("XRAY_PRIVATEKEY")
+        if not val: raise DotEnvVariableNotFound("XRAY_PRIVATEKEY")
+        return val
 
     def _get_xray_publickey(self) -> str:
-        xray_publickey = getenv("XRAY_PUBLICKEY")
-        if not xray_publickey:
-            raise DotEnvVariableNotFound("XRAY_PUBLICKEY")
-        return xray_publickey
+        val = getenv("XRAY_PUBLICKEY")
+        if not val: raise DotEnvVariableNotFound("XRAY_PUBLICKEY")
+        return val
 
     def _get_xray_shortid(self) -> str:
-        xray_shortid = getenv("XRAY_SHORTID")
-        if not xray_shortid:
-            raise DotEnvVariableNotFound("XRAY_SHORTID")
-        return xray_shortid
+        val = getenv("XRAY_SHORTID")
+        if not val: raise DotEnvVariableNotFound("XRAY_SHORTID")
+        return val
 
     def _get_domain_name(self) -> str:
-        domain_name = getenv("XRAY_DOMAIN_NAME")
-        if not domain_name:
-            raise DotEnvVariableNotFound("XRAY_DOMAIN_NAME")
-        return domain_name
+        return getenv("XRAY_DOMAIN_NAME", "vpnizator.online")
 
     # --- НОВЫЕ МЕТОДЫ ---
     def _get_xray_network(self) -> str:
-        # Если переменной нет, по умолчанию считаем xhttp, так как мы мигрируем
         return getenv("XRAY_NETWORK", "xhttp")
 
     def _get_xray_path(self) -> str:
         return getenv("XRAY_PATH", "/update")
 
-    @property
-    def user_config_prefix(self) -> str:
-        return self._user_config_prefix
+    def _get_xray_link_port(self) -> str:
+        # По умолчанию 443, но скрипт миграции задаст 4433
+        return getenv("XRAY_LINK_PORT", "443")
 
     @property
-    def xray_config_path(self) -> str:
-        return self._xray_config_path
-
+    def user_config_prefix(self) -> str: return self._user_config_prefix
     @property
-    def server_ip(self) -> str:
-        return self._server_ip
-
+    def xray_config_path(self) -> str: return self._xray_config_path
     @property
-    def xray_sni(self) -> str:
-        return self._xray_sni
-
+    def server_ip(self) -> str: return self._server_ip
     @property
-    def xray_privatekey(self) -> str:
-        return self._xray_privatekey
-
+    def xray_sni(self) -> str: return self._xray_sni
     @property
-    def xray_publickey(self) -> str:
-        return self._xray_publickey
-
+    def xray_privatekey(self) -> str: return self._xray_privatekey
     @property
-    def xray_shortid(self) -> str:
-        return self._xray_shortid
-
+    def xray_publickey(self) -> str: return self._xray_publickey
     @property
-    def domain_name(self) -> str:
-        return self._domain_name
-
+    def xray_shortid(self) -> str: return self._xray_shortid
     @property
-    def server_country(self) -> str:
-        return self._server_country
-
+    def domain_name(self) -> str: return self._domain_name
     @property
-    def server_country_code(self) -> str:
-        return self._server_country_code
+    def server_country(self) -> str: return self._server_country
+    @property
+    def server_country_code(self) -> str: return self._server_country_code
     
-    # --- НОВЫЕ СВОЙСТВА ---
     @property
-    def xray_network(self) -> str:
-        return self._xray_network
-
+    def xray_network(self) -> str: return self._xray_network
     @property
-    def xray_path(self) -> str:
-        return self._xray_path
+    def xray_path(self) -> str: return self._xray_path
+    @property
+    def xray_link_port(self) -> str: return self._xray_link_port
