@@ -10,18 +10,21 @@ from .credentials_generator import CredentialsGenerator
 class XrayConfiguration:
     def __init__(self):
         self._config_path = config.xray_config_path
-        self._server_ip_and_port = f"{config.server_ip}:443" # Это используется только как дефолт, ссылка генерится ниже
+        self._server_ip_and_port = f"{config.server_ip}:443"
         self._config_prefix = config.user_config_prefix
 
     async def _load_server_config(self) -> dict:
+        """Load server config from file"""
         async with aiofiles.open(self._config_path, "r") as f:
             return json.loads(await f.read())
 
     async def _save_server_config(self, config_data: dict):
+        """Save server config to file"""
         async with aiofiles.open(self._config_path, "w") as f:
             await f.write(json.dumps(config_data, indent=4))
 
     async def _restart_xray(self):
+        """Restart xray service"""
         os.system("systemctl restart xray")
 
     # --- ГЛАВНАЯ ЛОГИКА ДОБАВЛЕНИЯ ---
@@ -29,7 +32,7 @@ class XrayConfiguration:
         credentials = CredentialsGenerator().generate_new_person(user_telegram_id=user_telegram_id)
         
         # 1. Настраиваем flow
-        target_network = config.xray_network # "xhttp"
+        target_network = config.xray_network
         
         if target_network in ["xhttp", "grpc"]:
             credentials["flow"] = ""
@@ -41,26 +44,32 @@ class XrayConfiguration:
         updated_config = deepcopy(server_config_json)
 
         # 3. ИЩЕМ НУЖНЫЙ INBOUND
-        # Мы должны добавить юзера ТОЛЬКО в тот инбаунд, который соответствует XRAY_NETWORK
         user_added = False
         
-        for inbound in updated_config["inbounds"]:
+        for inbound in updated_config.get("inbounds", []):
             stream = inbound.get("streamSettings", {})
-            network = stream.get("network", "tcp") # дефолт tcp
+            network = stream.get("network", "tcp")
             
-            # Если нашли инбаунд с нужным протоколом (xhttp)
             if network == target_network:
+                if "settings" not in inbound:
+                    inbound["settings"] = {}
                 if "clients" not in inbound["settings"]:
                     inbound["settings"]["clients"] = []
                 
                 inbound["settings"]["clients"].append(credentials)
                 user_added = True
-                break # Добавили в целевой и выходим. В легаси (TCP) не добавляем.
+                break
 
-        # Fallback: Если вдруг инбаунда с xhttp нет (скрипт миграции не сработал?), кидаем в первый
+        # Fallback
         if not user_added:
-            logger.warning(f"Target network {target_network} not found in inbounds. Adding to first available.")
-            updated_config["inbounds"][0]["settings"]["clients"].append(credentials)
+            logger.warning(f"Target network {target_network} not found. Adding to first inbound.")
+            # Безопасное добавление в первый инбаунд
+            if updated_config["inbounds"]:
+                if "settings" not in updated_config["inbounds"][0]:
+                    updated_config["inbounds"][0]["settings"] = {}
+                if "clients" not in updated_config["inbounds"][0]["settings"]:
+                    updated_config["inbounds"][0]["settings"]["clients"] = []
+                updated_config["inbounds"][0]["settings"]["clients"].append(credentials)
 
         # 4. Сохраняем
         try:
@@ -72,12 +81,11 @@ class XrayConfiguration:
             await self._restart_xray()
             raise Exception("Failed to update server config")
 
-        # 5. Ссылка (порт 4433)
+        # 5. Ссылка
         link = await self.create_user_config_as_link_string(credentials["id"], config_name=config_name)
         return link, credentials["id"]
 
     async def create_user_config_as_link_string(self, uuid: str, config_name: str) -> str:
-        # Используем порт из конфига (4433), а не зашитый
         target_port = config.xray_link_port
         
         link = (
@@ -102,7 +110,6 @@ class XrayConfiguration:
         return link
 
     async def get_all_uuids(self) -> list[str]:
-        # Собираем UUID со всех инбаундов
         conf = await self._load_server_config()
         uuids = []
         for inbound in conf.get("inbounds", []):
@@ -111,26 +118,52 @@ class XrayConfiguration:
                 uuids.append(c["id"])
         return list(set(uuids))
 
+    # --- БЕЗОПАСНОЕ УДАЛЕНИЕ ---
     async def disconnect_user_by_uuid(self, uuid: str) -> bool:
-        # Удаляем отовсюду
         conf = await self._load_server_config()
         updated = deepcopy(conf)
-        for inbound in updated["inbounds"]:
-            if "clients" in inbound["settings"]:
-                inbound["settings"]["clients"] = [
-                    c for c in inbound["settings"]["clients"] if c["id"] != uuid
+        
+        modified = False
+        for inbound in updated.get("inbounds", []):
+            # Безопасное получение settings, чтобы не словить KeyError
+            settings = inbound.get("settings", {})
+            if "clients" in settings:
+                original_len = len(settings["clients"])
+                settings["clients"] = [
+                    c for c in settings["clients"] if c.get("id") != uuid
                 ]
-        return await self._apply_changes(updated, conf)
+                # Если длина изменилась, значит кого-то удалили
+                if len(settings["clients"]) < original_len:
+                    modified = True
+                    # Важно: обновляем словарь в инбаунде (хотя он и так по ссылке, но для надежности)
+                    inbound["settings"] = settings
+
+        if modified:
+            return await self._apply_changes(updated, conf)
+        else:
+            logger.info(f"User {uuid} not found, skipping restart.")
+            return True # Юзера и так нет, считаем что успех
 
     async def disconnect_many_uuids(self, uuids: list[str]) -> bool:
         conf = await self._load_server_config()
         updated = deepcopy(conf)
-        for inbound in updated["inbounds"]:
-             if "clients" in inbound["settings"]:
-                inbound["settings"]["clients"] = [
-                    c for c in inbound["settings"]["clients"] if c["id"] not in uuids
+        
+        modified = False
+        for inbound in updated.get("inbounds", []):
+            settings = inbound.get("settings", {})
+            if "clients" in settings:
+                original_len = len(settings["clients"])
+                settings["clients"] = [
+                    c for c in settings["clients"] if c.get("id") not in uuids
                 ]
-        return await self._apply_changes(updated, conf)
+                if len(settings["clients"]) < original_len:
+                    modified = True
+                    inbound["settings"] = settings
+
+        if modified:
+            return await self._apply_changes(updated, conf)
+        else:
+            return True
 
     async def deactivate_user_configs_in_xray(self, uuids: list[str]) -> bool:
         return await self.disconnect_many_uuids(uuids)
@@ -144,30 +177,43 @@ class XrayConfiguration:
         target_net = config.xray_network
         current_flow = "" if target_net in ["xhttp", "grpc"] else "xtls-rprx-vision"
 
-        # Ищем целевой инбаунд
         target_inbound = None
-        for inbound in updated_config["inbounds"]:
+        for inbound in updated_config.get("inbounds", []):
             if inbound.get("streamSettings", {}).get("network", "tcp") == target_net:
                 target_inbound = inbound
                 break
         
-        if not target_inbound:
+        if not target_inbound and updated_config.get("inbounds"):
             target_inbound = updated_config["inbounds"][0]
 
-        for uuid in config_uuids:
-            target_inbound["settings"]["clients"].append({
-                "id": uuid,
-                "email": f"{uuid}@example.com",
-                "flow": current_flow
-            })
+        if target_inbound:
+            if "settings" not in target_inbound: target_inbound["settings"] = {}
+            if "clients" not in target_inbound["settings"]: target_inbound["settings"]["clients"] = []
+
+            for uuid in config_uuids:
+                existing_ids = [c["id"] for c in target_inbound["settings"]["clients"]]
+                if uuid not in existing_ids:
+                    target_inbound["settings"]["clients"].append({
+                        "id": uuid,
+                        "email": f"{uuid}@example.com",
+                        "flow": current_flow
+                    })
 
         return await self._apply_changes(updated_config, server_config)
 
     async def get_active_client_count(self) -> int:
         try:
-            return len(await self.get_all_uuids())
+            server_config = await self._load_server_config()
+            target_net = config.xray_network
+            
+            for inbound in server_config.get("inbounds", []):
+                network = inbound.get("streamSettings", {}).get("network", "tcp")
+                if network == target_net:
+                    clients = inbound.get("settings", {}).get("clients", [])
+                    return len(clients)
+            return 0
         except Exception as e:
-            logger.error(e)
+            logger.error(f"Stat error: {e}")
             return 0
             
     async def _apply_changes(self, new_conf, old_conf) -> bool:
