@@ -29,8 +29,6 @@ Default='\033[0m'
 
 current_os_user=$(whoami)
 
-# sudo vim /etc/sysctl.conf
-
 # Удаляем все старые данные
 rm -rf ~/autoinstall_xray_api.sh
 rm -rf ~/get-pip.py
@@ -50,7 +48,7 @@ rm -rf /usr/local/lib
 
 sudo systemctl daemon-reload
 
-# # Расширение системы, если она была минимизирована
+# Расширение системы
 yes | unminimize
 
 # Апдейт и апгрейд системы
@@ -69,11 +67,11 @@ echo "Устанавливаем pip..."
 sudo curl https://bootstrap.pypa.io/get-pip.py -o /root/get-pip.py
 python3.11 /root/get-pip.py
 
-# Устанавливаем Poetry для управления зависимостями
+# Устанавливаем Poetry
 echo "Устанавливаем Poetry..."
 pip3.11 install poetry
 
-# Устанавливаем Git, если он еще не установлен
+# Устанавливаем Git
 echo "Устанавливаем Git..."
 sudo apt install git -y
 
@@ -81,10 +79,10 @@ sudo apt install git -y
 echo "Настраиваем часовой пояс на Москву..."
 sudo timedatectl set-timezone Europe/Moscow
 
-# Клонирование репозитория и установка зависимостей
+# Клонирование репозитория
 echo "Клонируем репозиторий vpnizator-xray-api и устанавливаем зависимости..."
 git clone https://github.com/Ardgellan/xray_server_api.git
-cd xray_server_api  # Убедитесь, что папка совпадает с названием репозитория
+cd xray_server_api 
 
 # Устанавливаем зависимости через Poetry
 echo "Устанавливаем зависимости проекта через Poetry..."
@@ -124,67 +122,43 @@ fi
 echo -e "${Green}\nEnter server country name (e.g., 'Estonia'):${Default}"
 read -p "Country Name: " server_country
 if [ -z "$server_country" ]; then
-    server_country="Estonia"  # Значение по умолчанию, если ничего не введено
+    server_country="Estonia"
 fi
 
 # Запрос кода страны
 echo -e "${Green}\nEnter server country code (e.g., 'EE'):${Default}"
 read -p "Country Code: " server_country_code
 if [ -z "$server_country_code" ]; then
-    server_country_code="EE"  # Значение по умолчанию, если ничего не введено
+    server_country_code="EE"
 fi
 
-site_url="cdnjs.com"
+# --- ИЗМЕНЕНИЕ 1: Меняем дефолтный сайт на Microsoft ---
+site_url="www.microsoft.com"
 config_prefix="VPNizator"
 
-#install xray
-bash -c "$(curl -L https://raw.githubusercontent.com/Ardgellan/XTLS_Reality_Server/main/install-release.sh)" @ install
+#install xray (Официальный скрипт установки последней версии)
+bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install
 
-# To increase performance, you can configure
-# Bottleneck Bandwidth and
-# Round-trip propagation time (BBR) congestion control algorithm on the server
+# BBR optimization
 echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf
 echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
 sysctl -p
 
-# execute /usr/local/bin/xray x25519
-# and get public and private keys by splitting lines output and
-# remove "Private key: " and "Public key: " from output
-# and save it to variables
+# Key generation
 x25519_keys=$(sudo /usr/local/bin/xray x25519)
 x25519_private_key=$(echo "$x25519_keys" | sed -n 1p | sed 's/Private key: //g')
-x25519_public_key=$(echo "$x25519_keys" | sed -n 2p | sed 's/Password: //g')
+x25519_public_key=$(echo "$x25519_keys" | sed -n 2p | sed 's/Public key: //g')
+short_id=$(sudo openssl rand -hex 8)
 
 echo "$x25519_keys" | sed 's/\$//g'
 
-
-
-#get short id by using openssl
-short_id=$(sudo openssl rand -hex 8)
-
+# --- ИЗМЕНЕНИЕ 2: Генерируем конфиг сразу под XHTTP ---
 sudo cat <<EOF > /usr/local/etc/xray/config.json
 {
     "log": {
         "loglevel": "info",
         "access": "/var/log/xray/access.log",
         "error": "/var/log/xray/error.log"
-    },
-    "routing": {
-        "rules": [
-            {
-                "type": "field",
-                "protocol": ["bittorrent"],
-                "outboundTag": "block",
-                "log": true
-            },
-            {
-                "type": "field",
-                "ip": ["geoip:private"],
-                "outboundTag": "block",
-                "log": true
-            }
-        ],
-        "domainStrategy": "AsIs"
     },
     "inbounds": [
         {
@@ -196,14 +170,19 @@ sudo cat <<EOF > /usr/local/etc/xray/config.json
                 "decryption": "none"
             },
             "streamSettings": {
-                "network": "tcp",
+                "network": "xhttp",
                 "security": "reality",
+                "xhttpSettings": {
+                    "path": "/update",
+                    "mode": "auto"
+                },
                 "realitySettings": {
                     "show": false,
                     "dest": "$site_url:443",
                     "xver": 0,
                     "serverNames": [
-                        "$site_url"
+                        "$site_url",
+                        "microsoft.com"
                     ],
                     "privateKey": "$x25519_private_key",
                     "minClientVer": "1.8.0",
@@ -211,15 +190,13 @@ sudo cat <<EOF > /usr/local/etc/xray/config.json
                     "maxTimeDiff": 0,
                     "shortIds": [
                         "$short_id"
-                    ]
+                    ],
+                    "spiderX": "/"
                 }
             },
             "sniffing": {
                 "enabled": true,
-                "destOverride": [
-                    "http",
-                    "tls"
-                ]
+                "destOverride": ["http", "tls", "quic"]
             }
         }
     ],
@@ -236,14 +213,14 @@ sudo cat <<EOF > /usr/local/etc/xray/config.json
 }
 EOF
 
-# enable and start bot service
+# enable and start services
 systemctl daemon-reload
 systemctl enable xray_api.service
 systemctl start xray_api.service
 systemctl enable xray.service
 systemctl restart xray.service
 
-# configure xray_api .env file
+# --- ИЗМЕНЕНИЕ 3: Добавляем переменные XHTTP в .env ---
 sudo cat <<EOF > ~/xray_server_api/app/data/.env
 
 XRAY_DOMAIN_NAME = "$domain_name"
@@ -255,6 +232,8 @@ XRAY_PRIVATEKEY = "$x25519_private_key"
 XRAY_PUBLICKEY = "$x25519_public_key"
 XRAY_SHORTID = "$short_id"
 XRAY_SNI = "$site_url"
+XRAY_NETWORK = "xhttp"
+XRAY_PATH = "/update"
 EOF
 
-echo "Установка завершена!"
+echo "Установка завершена! Сервер настроен на XHTTP + Microsoft."
