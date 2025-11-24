@@ -1,8 +1,5 @@
 from os import getenv
-
 from dotenv import load_dotenv
-from flag import flag
-
 from app.utils.ip_info import IPInfo
 
 
@@ -27,6 +24,10 @@ class Configuration:
         self._xray_publickey: str = self._get_xray_publickey()
         self._xray_shortid: str = self._get_xray_shortid()
         self._domain_name: str = self._get_domain_name()
+        
+        # --- НОВЫЕ ПЕРЕМЕННЫЕ ДЛЯ XHTTP ---
+        self._xray_network: str = self._get_xray_network()
+        self._xray_path: str = self._get_xray_path()
 
     def _get_user_config_prefix(self) -> str:
         user_config_prefix = getenv("USER_CONFIGS_PREFIX")
@@ -85,6 +86,13 @@ class Configuration:
             raise DotEnvVariableNotFound("XRAY_DOMAIN_NAME")
         return domain_name
 
+    # --- НОВЫЕ МЕТОДЫ ---
+    def _get_xray_network(self) -> str:
+        # Если переменной нет, по умолчанию считаем xhttp, так как мы мигрируем
+        return getenv("XRAY_NETWORK", "xhttp")
+
+    def _get_xray_path(self) -> str:
+        return getenv("XRAY_PATH", "/update")
 
     @property
     def user_config_prefix(self) -> str:
@@ -125,3 +133,12 @@ class Configuration:
     @property
     def server_country_code(self) -> str:
         return self._server_country_code
+    
+    # --- НОВЫЕ СВОЙСТВА ---
+    @property
+    def xray_network(self) -> str:
+        return self._xray_network
+
+    @property
+    def xray_path(self) -> str:
+        return self._xray_path
