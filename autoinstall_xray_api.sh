@@ -144,7 +144,7 @@ echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf
 echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
 sysctl -p
 
-# Key generation
+## Key generation
 # x25519_keys=$(sudo /usr/local/bin/xray x25519)
 # x25519_private_key=$(echo "$x25519_keys" | sed -n 1p | sed 's/Private key: //g')
 # x25519_public_key=$(echo "$x25519_keys" | sed -n 2p | sed 's/Public key: //g')
@@ -152,15 +152,34 @@ sysctl -p
 
 # echo "$x25519_keys" | sed 's/\$//g'
 
+# # Key generation
+# x25519_keys=$(sudo /usr/local/bin/xray x25519)
+
+# x25519_private_key=$(echo "$x25519_keys" | sed -n 1p | sed 's/Private key: //g')
+# x25519_public_key=$(echo "$x25519_keys" | sed -n 2p | sed 's/Password: //g')
+
+# echo "$x25519_keys" | sed 's/\$//g'
+
+# short_id=$(sudo openssl rand -hex 8)
+
 # Key generation
-x25519_keys=$(sudo /usr/local/bin/xray x25519)
+# 1. Сохраняем вывод в файл, чтобы убрать магию переменных
+sudo /usr/local/bin/xray x25519 > /tmp/xray_keys_raw.txt
 
-x25519_private_key=$(echo "$x25519_keys" | sed -n 1p | sed 's/Private key: //g')
-x25519_public_key=$(echo "$x25519_keys" | sed -n 2p | sed 's/Password: //g')
+# 2. Чистим файл от цветовых кодов (ЭТО КРИТИЧЕСКИ ВАЖНО)
+sed -i 's/\x1b\[[0-9;]*m//g' /tmp/xray_keys_raw.txt
 
-echo "$x25519_keys" | sed 's/\$//g'
+# 3. Читаем ключи. Берем ПОСЛЕДНЕЕ слово в строке ($NF), как бы ни называлось первое.
+x25519_private_key=$(head -n 1 /tmp/xray_keys_raw.txt | awk '{print $NF}')
+x25519_public_key=$(head -n 2 /tmp/xray_keys_raw.txt | tail -n 1 | awk '{print $NF}')
 
 short_id=$(sudo openssl rand -hex 8)
+
+# Отладочный вывод (чтобы ты видел, что ключи чистые)
+echo "--- DEBUG KEYS ---"
+echo "Priv: '$x25519_private_key'"
+echo "Pub:  '$x25519_public_key'"
+echo "------------------"
 
 # Проверка (вывод на экран для тебя)
 echo "-----------------------------------"
