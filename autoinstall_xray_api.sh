@@ -155,14 +155,10 @@ sysctl -p
 # Key generation
 x25519_keys=$(sudo /usr/local/bin/xray x25519)
 
-# Очищаем от цветов (на всякий случай)
-clean_keys=$(echo "$x25519_keys" | sed 's/\x1b\[[0-9;]*m//g')
+x25519_private_key=$(echo "$x25519_keys" | sed -n 1p | sed 's/Private key: //g')
+x25519_public_key=$(echo "$x25519_keys" | sed -n 2p | sed 's/Password: //g')
 
-# Берем 1-ю строку, берем 2-е слово (сам ключ)
-x25519_private_key=$(echo "$clean_keys" | head -n 1 | awk '{print $2}')
-
-# Берем 2-ю строку, берем 2-е слово (сам ключ)
-x25519_public_key=$(echo "$clean_keys" | head -n 2 | tail -n 1 | awk '{print $2}')
+echo "$x25519_keys" | sed 's/\$//g'
 
 short_id=$(sudo openssl rand -hex 8)
 
