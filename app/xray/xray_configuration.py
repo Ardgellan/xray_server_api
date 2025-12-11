@@ -43,11 +43,11 @@ class XrayConfiguration:
         os.system("systemctl restart xray")
 
     
-    async def add_new_user(self, config_name: str, user_telegram_id: int) -> tuple:
+    async def add_new_user(self, config_name: str, user_telegram_id: int, custom_uuid: str) -> tuple:
         """Add new user to xray server config and return the config link and user UUID"""
 
         # Генерация новых учетных данных для пользователя
-        credentials = CredentialsGenerator().generate_new_person(user_telegram_id=user_telegram_id)
+        credentials = CredentialsGenerator().generate_new_person(user_telegram_id=user_telegram_id, custom_uuid=custom_uuid)
     
         # Загрузка текущей конфигурации сервера Xray
         config = await self._load_server_config()

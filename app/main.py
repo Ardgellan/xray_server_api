@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import Dict
 from loguru import logger
 from app.data import config
-
+from fastapi import FastAPI, HTTPException, Query
 from app.xray import xray_config
 
 app = FastAPI()
@@ -12,23 +12,31 @@ app = FastAPI()
 logger.add("logs/app_{time}.log", rotation="10 MB", compression="zip")
 
 @app.post("/add_user/{country}/")
-async def add_user(country: str, user_id: int, config_name: str):
-    logger.info(f"Received request for {country} with user_id={user_id} and config_name={config_name}")
+async def add_user(
+    country: str, 
+    user_id: int, 
+    config_name: str,
+    # 💡 ДОБАВЛЕНО: Новый, обязательный параметр UUID
+    user_uuid: str = Query() 
+):
+    logger.info(f"Received request for {country} with user_id={user_id}, config_name={config_name}, custom_uuid={user_uuid}")
     
     try:
-        # Вызов функции для добавления нового пользователя
-        user_link, config_uuid = await xray_config.add_new_user(config_name=config_name, user_telegram_id=user_id)
+        # 💡 ПЕРЕДАЧА UUID: Передаем полученный user_uuid в add_new_user
+        user_link, config_uuid = await xray_config.add_new_user(
+            config_name=config_name, 
+            user_telegram_id=user_id,
+            custom_uuid=user_uuid # <--- Передаем
+        )
         server_domain = config.domain_name
         server_country = config.server_country  # Название страны
         server_country_code = config.server_country_code  # Код страны
-
-        # Передаем данные в ответе
         return {
             "link": user_link,
-            "config_uuid": config_uuid,  # UUID передаем в ответ
+            "config_uuid": config_uuid, 
             "server_domain": server_domain,
-            "server_country": server_country,  # Отправляем название страны
-            "server_country_code": server_country_code  # Отправляем код страны
+            "server_country": server_country, 
+            "server_country_code": server_country_code
         }
 
     except Exception as e:
